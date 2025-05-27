@@ -1,4 +1,11 @@
-import { IsEmail, IsString, MinLength, IsEnum, IsOptional, IsDateString } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  IsEnum,
+  IsOptional,
+  IsDateString,
+} from 'class-validator';
 
 export class SignupDto {
   @IsEmail() email: string;
@@ -10,6 +17,6 @@ export class SignupDto {
 
   @IsOptional() @IsDateString() dateNaissance?: string;
 
-  @IsEnum(['Homme','Femme','Ne préfère pas dire']) sexe: string;
-  @IsEnum(['patient','professionnel'])                role: string;
+  @IsEnum(['Homme', 'Femme', 'Ne préfère pas dire']) sexe: string;
+  @IsEnum(['patient', 'professionnel']) role: string;
 }
