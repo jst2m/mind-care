@@ -1,0 +1,20 @@
+{
+  "name": "mind-care",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jst2m/mind-care.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jst2m/mind-care/issues"
+  },
+  "homepage": "https://github.com/jst2m/mind-care#readme"
+}

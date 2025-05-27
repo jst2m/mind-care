@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
@@ -8,7 +9,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(cs: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey:    cs.get<string>('JWT_SECRET'),
+      secretOrKey: cs.get<string>('JWT_SECRET') ?? 'default_secret_key',
     });
   }
 
