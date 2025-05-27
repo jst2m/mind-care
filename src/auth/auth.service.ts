@@ -32,6 +32,16 @@ export class AuthService {
     });
     return this.repo.save(user);
   }
+    /** Hash un mot de passe en clair */
+  async hashPassword(password: string): Promise<string> {
+    const saltRounds = 10;
+    return await bcrypt.hash(password, saltRounds);
+  }
+
+  /** Compare mot de passe en clair / hash */
+  async compare(raw: string, hashed: string): Promise<boolean> {
+    return await bcrypt.compare(raw, hashed);
+  }
 
   async signIn(dto: LoginDto) {
     const user = await this.repo.findOneBy({ email: dto.email });
