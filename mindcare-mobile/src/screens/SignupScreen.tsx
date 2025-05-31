@@ -1,5 +1,5 @@
 // src/screens/SignupScreen.tsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,14 +8,15 @@ import {
   Alert,
   ScrollView,
   Platform,
-} from 'react-native';
-import tw from 'twrnc';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
-import { storeToken } from '../utils/authStorage';
+} from "react-native";
+import tw from "twrnc";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
+import { storeToken } from "../utils/authStorage";
 
 // Remplacez l'import pour qu'il pointe vers config.ts
-import { API_HOST } from '../utils/config';
+import { API_HOST } from "../utils/config";
+import { useAuth } from "../contexts/AuthContext";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -25,92 +26,100 @@ export type RootStackParamList = {
 
 type SignupScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  'Signup'
+  "Signup"
 >;
 
 export default function SignupScreen() {
   const navigation = useNavigation<SignupScreenNavigationProp>();
+  const { login } = useAuth();
 
-  const [firstname, setFirstname] = useState<string>('');
-  const [lastname, setLastname] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [birthDate, setBirthDate] = useState<string>(''); // ex. "1990-05-15"
-  const [gender, setGender] = useState<'Homme' | 'Femme' | 'Ne préfère pas dire'>('Homme');
+  const [firstname, setFirstname] = useState<string>("");
+  const [lastname, setLastname] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [birthDate, setBirthDate] = useState<string>(""); // ex. "1990-05-15"
+  const [gender, setGender] = useState<
+    "Homme" | "Femme" | "Ne préfère pas dire"
+  >("Homme");
 
   const handleSignup = async () => {
     if (!firstname || !lastname || !email || !password || !confirmPassword) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires.');
+      Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires.");
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas.');
+      Alert.alert("Erreur", "Les mots de passe ne correspondent pas.");
       return;
     }
     if (password.length < 8) {
-      Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 8 caractères.');
+      Alert.alert(
+        "Erreur",
+        "Le mot de passe doit contenir au moins 8 caractères."
+      );
       return;
     }
     // Vérifier le format de l’email de base
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      Alert.alert('Erreur', 'Veuillez entrer une adresse email valide.');
+      Alert.alert("Erreur", "Veuillez entrer une adresse email valide.");
       return;
     }
 
     try {
       // 1) Appel à l’API avec l’URL correcte (API_HOST vient de config.ts)
       const response = await fetch(`${API_HOST}/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prenom: firstname.trim(),
           nom: lastname.trim(),
           email: email.trim(),
           motDePasse: password,
           dateNaissance: birthDate || undefined, // facultatif
-          sexe: gender,             // "Homme" | "Femme" | "Ne préfère pas dire"
-          role: 'patient',          // ou "professionnel"
+          sexe: gender, // "Homme" | "Femme" | "Ne préfère pas dire"
+          role: "patient", // ou "professionnel"
         }),
       });
 
-      console.log('Status HTTP signup :', response.status);
+      console.log("Status HTTP signup :", response);
       const data = await response.json();
-      console.log('Body signup :', data);
+      console.log("Body signup :", data);
 
       // 2) Si conflit (409), afficher un message
       if (response.status === 409) {
-        Alert.alert('Inscription impossible', data.message || 'Email déjà utilisé');
+        Alert.alert(
+          "Inscription impossible",
+          data.message || "Email déjà utilisé"
+        );
         return;
       }
       // 3) Si erreur générique (400, 500, etc.), afficher message
       if (!response.ok) {
-        Alert.alert('Erreur', data.message || 'Problème lors de l’inscription');
+        Alert.alert("Erreur", data.message || "Problème lors de l’inscription");
         return;
       }
 
       // 4) Si tout va bien, on récupère le token et on stocke
       const { accessToken } = data as { accessToken: string };
       if (!accessToken) {
-        Alert.alert('Erreur', 'Aucun token renvoyé par le serveur.');
+        Alert.alert("Erreur", "Aucun token renvoyé par le serveur.");
         return;
       }
-      await storeToken(accessToken);
-
-      // 5) Naviguer vers l’écran protégé
-      navigation.replace('Home');
+      await login(data.accessToken);
     } catch (error) {
-      console.error('Erreur à l’inscription :', error);
+      console.error("Erreur à l’inscription :", error);
       Alert.alert(
-        'Erreur réseau',
-        'Impossible de contacter le serveur. Vérifiez l’URL et la connexion.'
+        "Erreur réseau",
+        "Impossible de contacter le serveur. Vérifiez l’URL et la connexion."
       );
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={tw`flex-1 justify-center px-6 bg-gray-50`}>
+    <ScrollView
+      contentContainerStyle={tw`flex-1 justify-center px-6 bg-gray-50`}
+    >
       <Text style={tw`text-3xl text-center font-bold mb-6`}>Inscription</Text>
 
       {/* Prénom */}
@@ -155,7 +164,9 @@ export default function SignupScreen() {
       />
 
       {/* Confirmation */}
-      <Text style={tw`text-sm text-gray-600 mb-1`}>Confirmez le mot de passe</Text>
+      <Text style={tw`text-sm text-gray-600 mb-1`}>
+        Confirmez le mot de passe
+      </Text>
       <TextInput
         value={confirmPassword}
         onChangeText={setConfirmPassword}
@@ -165,7 +176,9 @@ export default function SignupScreen() {
       />
 
       {/* Date de naissance (optionnel) */}
-      <Text style={tw`text-sm text-gray-600 mb-1`}>Date de naissance (YYYY-MM-DD)</Text>
+      <Text style={tw`text-sm text-gray-600 mb-1`}>
+        Date de naissance (YYYY-MM-DD)
+      </Text>
       <TextInput
         value={birthDate}
         onChangeText={setBirthDate}
@@ -178,7 +191,7 @@ export default function SignupScreen() {
       <TextInput
         value={gender}
         onChangeText={(text) => {
-          if (['Homme', 'Femme', 'Ne préfère pas dire'].includes(text))
+          if (["Homme", "Femme", "Ne préfère pas dire"].includes(text))
             setGender(text as any);
         }}
         placeholder="Homme / Femme / Ne préfère pas dire"
@@ -195,7 +208,7 @@ export default function SignupScreen() {
 
       <View style={tw`flex-row justify-center`}>
         <Text style={tw`text-gray-600`}>Vous avez déjà un compte ? </Text>
-        <TouchableOpacity onPress={() => navigation.replace('Login')}>
+        <TouchableOpacity onPress={() => navigation.replace("Login")}>
           <Text style={tw`text-green-700 font-semibold`}>Se connecter</Text>
         </TouchableOpacity>
       </View>

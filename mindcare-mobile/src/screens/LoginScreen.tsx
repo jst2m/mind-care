@@ -1,20 +1,15 @@
 // src/screens/LoginScreen.tsx
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import tw from 'twrnc';
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
+import tw from "twrnc";
 
 // Importez API_HOST depuis config.ts
-import { API_HOST } from '../utils/config';
+import { API_HOST } from "../utils/config";
 
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
-import { storeToken } from '../utils/authStorage';
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
+import { storeToken } from "../utils/authStorage";
+import { useAuth } from "../contexts/AuthContext";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -22,49 +17,54 @@ export type RootStackParamList = {
   Home: undefined;
 };
 
-type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+type LoginScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Login"
+>;
 
 export default function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { login } = useAuth();
 
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
+      Alert.alert("Erreur", "Veuillez remplir tous les champs.");
       return;
     }
 
     try {
       // Utilisez `API_HOST` pour pointer vers votre back-end
       const response = await fetch(`${API_HOST}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, motDePasse: password }),
       });
 
-      console.log('Status HTTP login :', response.status);
+      console.log("Status HTTP login :", response.status);
       const data = await response.json();
-      console.log('Body login :', data);
+      console.log("Body login :", data);
 
       if (!response.ok) {
-        Alert.alert('Connexion impossible', data.message || 'Identifiants invalides');
+        Alert.alert(
+          "Connexion impossible",
+          data.message || "Identifiants invalides"
+        );
         return;
       }
 
       // Supposons que le back-end renvoie { accessToken: "…" }
       const { accessToken } = data as { accessToken: string };
       if (!accessToken) {
-        Alert.alert('Erreur', 'Aucun token renvoyé par le serveur.');
+        Alert.alert("Erreur", "Aucun token renvoyé par le serveur.");
         return;
       }
-      await storeToken(accessToken);
-
-      navigation.replace('Home');
+      await login(data.accessToken);
     } catch (error) {
-      console.error('Erreur au login :', error);
-      Alert.alert('Erreur', 'Impossible de se connecter. Veuillez réessayer.');
+      console.error("Erreur au login :", error);
+      Alert.alert("Erreur", "Impossible de se connecter. Veuillez réessayer.");
     }
   };
 
@@ -101,7 +101,7 @@ export default function LoginScreen() {
 
       <View style={tw`mt-4 flex-row justify-center`}>
         <Text style={tw`text-gray-600`}>Pas encore de compte ? </Text>
-        <TouchableOpacity onPress={() => navigation.replace('Signup')}>
+        <TouchableOpacity onPress={() => navigation.replace("Signup")}>
           <Text style={tw`text-green-700 font-semibold`}>S'inscrire</Text>
         </TouchableOpacity>
       </View>

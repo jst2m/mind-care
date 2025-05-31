@@ -1,25 +1,29 @@
 // src/screens/PatientDrawerContent.tsx
-import React from 'react';
-import { Alert } from 'react-native';
-import { DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
-import tw from 'twrnc';
-import { removeToken } from '../utils/authStorage';
-import { useNavigation } from '@react-navigation/native';
+import React from "react";
+import { Alert } from "react-native";
+import {
+  DrawerContentScrollView,
+  DrawerItemList,
+  DrawerItem,
+} from "@react-navigation/drawer";
+import tw from "twrnc";
+import { removeToken } from "../utils/authStorage";
+import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function PatientDrawerContent(props: any) {
-  const navigation = useNavigation();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
-      'Déconnexion',
-      'Voulez-vous vraiment vous déconnecter ?',
+      "Déconnexion",
+      "Voulez-vous vraiment vous déconnecter ?",
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: "Annuler", style: "cancel" },
         {
-          text: 'OK',
+          text: "OK",
           onPress: async () => {
-            await removeToken();
-            navigation.replace('Login' as never);
+            logout();
           },
         },
       ],

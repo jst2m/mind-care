@@ -1,8 +1,6 @@
 import * as nodeCrypto from 'crypto';
 
-;(globalThis as any).crypto = {
-  randomUUID: nodeCrypto.randomUUID,
-};
+const crypto = require('crypto').webcrypto;
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -25,8 +23,9 @@ async function bootstrap() {
     next();
   });
 
-  await app.listen(3000);
-  console.log('🚀 Backend running on http://localhost:3000');
+  app.listen(3000, '0.0.0.0', () => {
+    console.log('Backend running on http://0.0.0.0:3000');
+  });
 }
 
 bootstrap();

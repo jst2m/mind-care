@@ -1,12 +1,13 @@
+/* eslint-disable prettier/prettier */
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Repository }   from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { JwtService }   from '@nestjs/jwt';
-import * as bcrypt      from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 import { Utilisateur } from '../utilisateur/utilisateur.entity';
-import { SignupDto }    from './dto/signup.dto';
-import { LoginDto }     from './dto/login.dto';
+import { SignupDto } from './dto/signup.dto';
+import { LoginDto } from './dto/login.dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -26,11 +27,27 @@ export class AuthService {
       motDePasse: await bcrypt.hash(dto.motDePasse, 10),
       prenom: dto.prenom,
       nom: dto.nom,
-      dateNaissance: dto.dateNaissance ? new Date(dto.dateNaissance) : undefined,
+      dateNaissance: dto.dateNaissance
+        ? new Date(dto.dateNaissance)
+        : undefined,
       sexe: dto.sexe,
       role: dto.role,
     });
-    return this.repo.save(user);
+    const savedUser = await this.repo.save(user);
+
+    const payload = { sub: savedUser.uuid, role: savedUser.role };
+    const accessToken = this.jwtService.sign(payload);
+
+    return {
+      accessToken,
+      user: {
+        uuid: savedUser.uuid,
+        email: savedUser.email,
+        prenom: savedUser.prenom,
+        nom: savedUser.nom,
+        role: savedUser.role,
+      },
+    };
   }
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
