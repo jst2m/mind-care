@@ -1,15 +1,16 @@
+// backend/src/journal-entree/journal-entree.entity.ts
+
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  CreateDateColumn,
   UpdateDateColumn,
   Index,
 } from 'typeorm';
 import { Patient } from '../patient/patient.entity';
 
-@Entity()
+@Entity('journal_entree')
 @Index(['patientUuid', 'dateJournal'])
 export class JournalEntree {
   @PrimaryGeneratedColumn()
@@ -18,8 +19,13 @@ export class JournalEntree {
   @Column('char', { length: 36, name: 'patient_uuid' })
   patientUuid: string;
 
-  @Column({ type: 'date', name: 'date_journal' })
-  dateJournal: string;
+  // Remplace @CreateDateColumn par un @Column avec default CURRENT_TIMESTAMP
+  @Column({
+    type: 'timestamp',
+    name: 'date_journal',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  dateJournal: Date;
 
   @Column()
   titre: string;
@@ -35,9 +41,6 @@ export class JournalEntree {
 
   @Column({ type: 'boolean', default: false })
   confidentiel: boolean;
-
-  @CreateDateColumn({ name: 'date_creation' })
-  dateCreation: Date;
 
   @UpdateDateColumn({ name: 'date_maj' })
   dateMaj: Date;

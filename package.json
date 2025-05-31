@@ -16,5 +16,12 @@
   "bugs": {
     "url": "https://github.com/jst2m/mind-care/issues"
   },
-  "homepage": "https://github.com/jst2m/mind-care#readme"
+  "homepage": "https://github.com/jst2m/mind-care#readme",
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.8",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "react-markdown": "^10.1.0",
+    "tailwindcss": "^4.1.8"
+  }
 }

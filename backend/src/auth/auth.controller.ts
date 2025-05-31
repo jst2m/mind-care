@@ -10,9 +10,10 @@ export class AuthController {
 
   @Post('signup')
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  signUp(@Body() dto: SignupDto) {
+  async signUp(@Body() dto: SignupDto) {
     return this.authService.signUp(dto);
   }
+
 
   @Post('login')
   @UsePipes(new ValidationPipe({ whitelist: true }))

@@ -1,3 +1,4 @@
+// backend/src/exercice/exercice.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,

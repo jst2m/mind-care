@@ -6,7 +6,7 @@ import { Patient }           from './patient.entity';
 @Controller('patient')
 @UseGuards(JwtAuthGuard)
 export class PatientController {
-  constructor(private svc: PatientService) {}
+  constructor(private readonly svc: PatientService) {}
 
   @Get()
   getProfile(@Request() req): Promise<Patient> {
@@ -21,3 +21,4 @@ export class PatientController {
     return this.svc.upsert({ uuid: req.user.uuid, ...body });
   }
 }
+
