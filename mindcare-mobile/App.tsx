@@ -319,7 +319,8 @@ function ProfileStackNavigator() {
   );
 }
 
-// --- 8) Bottom Tab Navigator for authenticated user ---
+// --- 8) Bottom Tab Navigator pour utilisateur authentifié ---
+// Notez que l’ordre a été inversé pour placer HomeTab en premier
 const Tab = createBottomTabNavigator<{}>();
 
 function PatientTabNavigator() {
@@ -328,10 +329,9 @@ function PatientTabNavigator() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
-          if (route.name === "HomeTab") {
-            return <Feather name="home" size={size + 6} color={color} />;
-          }
           switch (route.name) {
+            case "HomeTab":
+              return <Feather name="home" size={size + 6} color={color} />;
             case "RendezVousTab":
               return <Feather name="calendar" size={size} color={color} />;
             case "JournalTab":
@@ -357,26 +357,31 @@ function PatientTabNavigator() {
         },
       })}
     >
-      <Tab.Screen
-        name="RendezVousTab"
-        component={RendezVousStackNavigator}
-        options={{ title: "RDV" }}
-      />
-      <Tab.Screen
-        name="JournalTab"
-        component={JournalStackNavigator}
-        options={{ title: "Journal" }}
-      />
+      {/* HomeTab placé en premier */}
       <Tab.Screen
         name="HomeTab"
         component={HomeStackNavigator}
         options={{ title: "Accueil" }}
       />
+
+      <Tab.Screen
+        name="RendezVousTab"
+        component={RendezVousStackNavigator}
+        options={{ title: "RDV" }}
+      />
+
+      <Tab.Screen
+        name="JournalTab"
+        component={JournalStackNavigator}
+        options={{ title: "Journal" }}
+      />
+
       <Tab.Screen
         name="ExercisesTab"
         component={ExercisesStackNavigator}
         options={{ title: "Exercices" }}
       />
+
       <Tab.Screen
         name="ProfileTab"
         component={ProfileStackNavigator}
@@ -386,7 +391,7 @@ function PatientTabNavigator() {
   );
 }
 
-// --- 9) Main App + InnerApp for auth logic ---
+// --- 9) Main App + InnerApp pour gestion de l’authentification ---
 export default function App() {
   return (
     <AuthProvider>
@@ -402,7 +407,7 @@ function InnerApp() {
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    // Init push notifications
+    // Initialisation des notifications push
     registerForPushNotificationsAsync()
       .then((token) => {
         if (token) {
@@ -457,7 +462,7 @@ function InnerApp() {
   );
 }
 
-// --- 10) Register for push notifications ---
+// --- 10) Enregistrement pour les notifications push ---
 async function registerForPushNotificationsAsync(): Promise<string | undefined> {
   let token: string | undefined;
 
@@ -497,6 +502,5 @@ async function registerForPushNotificationsAsync(): Promise<string | undefined> 
   return token;
 }
 
-const styles = StyleSheet.create({
-  // (optionnel)
-});
+// (styles éventuels, non modifiés)
+const styles = StyleSheet.create({});
