@@ -100,4 +100,10 @@
   .banner {
     height: 300px;
   }
+  .slot.reserved {
+  background-color: #a8875a; /* marron doux */
+  color: #fff;
+  cursor: not-allowed;
+}
+
 }
