@@ -2,7 +2,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './navbar';
 import AuthForm from './AuthForm';
 import ProfilPro from './ProfilPro';
-import HomePage from './HomePage'
+import HomePage from './HomePage';
+import Messages from './Messages';
+import Calendar from './Calendar';
 
 function App() {
   return (
@@ -10,9 +12,12 @@ function App() {
       <div style={{ backgroundColor: '#fefcf9', minHeight: '100vh' }}>
         <Navbar />
         <Routes>
-          <Route path="/" element={<HomePage />} /> {/* Page d’accueil réelle */}
-          <Route path="/login" element={<AuthForm />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/auth" element={<AuthForm />} />       {/* ✅ Authentification */}
+          <Route path="/login" element={<AuthForm />} />       {/* (optionnel si déjà utilisé ailleurs) */}
           <Route path="/profil" element={<ProfilPro />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/rendez-vous" element={<Calendar />} /> {/* ✅ Corrigé ici */}
         </Routes>
       </div>
     </Router>

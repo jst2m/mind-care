@@ -1,16 +1,16 @@
 import React from 'react';
 import './HomePage.css';
-
+import backgroundImage from './assets/HomePage.png';
 
 const HomePage: React.FC = () => {
   return (
     <div className="home-wrapper">
-      {/* Barre de navigation (inutile si tu as déjà une navbar globale) */}
-      {/* Tu peux retirer ce <nav> si ta navbar est ailleurs */}
-
-      {/* Bannière */}
-      <div className="banner">
-        <h1 className="banner-title">Bienvenue sur mindCare</h1>
+      {/* Bannière avec image de fond */}
+      <div
+        className="banner"
+        style={{ backgroundImage: `url(${backgroundImage})` }}
+      >
+        <h1 className="banner-title">Bienvenue sur MindCare</h1>
       </div>
 
       {/* Introduction */}

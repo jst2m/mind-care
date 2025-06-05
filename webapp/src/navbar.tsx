@@ -10,10 +10,10 @@ const Navbar = () => {
         </div>
         <nav className="navbar-links" aria-label="Navigation principale">
           <Link to="/">Accueil</Link>
-          <Link to="/login">Rendez-vous</Link>
-          <Link to="/login">Journal</Link>
-          <Link to="/login">Exercices</Link>
+          <Link to="/rendez-vous">Rendez-vous</Link>
+          <Link to="/messages">Messages</Link>
           <Link to="/profil">Profil</Link>
+          <Link to="/auth">Authentification</Link> {/* ✅ nouveau lien */}
         </nav>
       </div>
     </header>
