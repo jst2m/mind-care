@@ -1,4 +1,3 @@
-// src/screens/PatientDrawerContent.tsx
 import React from "react";
 import { Alert } from "react-native";
 import {
@@ -7,8 +6,6 @@ import {
   DrawerItem,
 } from "@react-navigation/drawer";
 import tw from "twrnc";
-import { removeToken } from "../utils/authStorage";
-import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function PatientDrawerContent(props: any) {
@@ -23,7 +20,7 @@ export default function PatientDrawerContent(props: any) {
         {
           text: "OK",
           onPress: async () => {
-            logout();
+            await logout();
           },
         },
       ],

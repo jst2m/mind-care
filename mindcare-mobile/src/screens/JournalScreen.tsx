@@ -1,100 +1,286 @@
 // src/screens/JournalScreen.tsx
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, Alert, ScrollView } from 'react-native';
-import tw from 'twrnc';
+
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+  ActivityIndicator,
+  StyleSheet,
+  Platform,
+  KeyboardAvoidingView,
+} from "react-native";
+import { colors, typography, commonStyles, fonts } from "../styles/theme";
+import { apiFetch } from "../utils/api";
 
 type Entry = {
-  id: string;
-  date: string;
-  mood: number;
-  notes: string;
+  id: number;
+  dateJournal: string;
+  titre: string;
+  contenu: string;
+  humeur: number;
+  tags: string;
+  confidentiel: boolean;
+  dateMaj: string;
 };
 
-const sampleEntries: Entry[] = [
-  { id: '1', date: '30/05/2025', mood: 7, notes: 'Je me suis senti calme après la méditation.' },
-  { id: '2', date: '29/05/2025', mood: 4, notes: 'Journée stressante au travail.' },
-];
-
 export default function JournalScreen() {
-  const [entries, setEntries] = useState<Entry[]>(sampleEntries);
-  const [mood, setMood] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const addEntry = () => {
+  const [mood, setMood] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
+  const [submitting, setSubmitting] = useState<boolean>(false);
+
+  useEffect(() => {
+    fetchEntries();
+  }, []);
+
+  const fetchEntries = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await apiFetch<Entry[]>("/journal-entree");
+      const sorted = data.sort(
+        (a, b) =>
+          new Date(b.dateJournal).getTime() - new Date(a.dateJournal).getTime()
+      );
+      setEntries(sorted);
+    } catch (err: any) {
+      console.error("Erreur fetch journal :", err);
+      setError("Impossible de charger votre journal émotionnel.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addEntry = async () => {
     const moodNum = Number(mood);
     if (!mood || isNaN(moodNum) || moodNum < 1 || moodNum > 10) {
-      Alert.alert('Erreur', 'Veuillez entrer une humeur valide entre 1 et 10.');
+      Alert.alert("Erreur", "Veuillez entrer une humeur valide entre 1 et 10.");
       return;
     }
 
-    const newEntry: Entry = {
-      id: String(entries.length + 1),
-      date: new Date().toLocaleDateString('fr-FR'),
-      mood: moodNum,
-      notes,
-    };
+    try {
+      setSubmitting(true);
 
-    setEntries([newEntry, ...entries]);
-    setMood('');
-    setNotes('');
+      const payload = {
+        humeur: moodNum,
+        titre: "",                 // champ NOT NULL, envoyé vide
+        contenu: notes.trim(),     // on envoie « contenu » au back-end
+        tags: "",                  // facultatif
+        confidentiel: false,       // facultatif
+      };
+
+      const created: Entry = await apiFetch<Entry>("/journal-entree", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      setEntries((prev) => [created, ...prev]);
+      setMood("");
+      setNotes("");
+    } catch (err: any) {
+      console.error("Erreur ajout entrée :", err);
+      Alert.alert(
+        "Erreur",
+        err.message?.includes("500")
+          ? "Erreur interne serveur, vérifiez la configuration du back."
+          : "Impossible d’ajouter votre entrée."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const renderItem = ({ item }: { item: Entry }) => (
-    <View style={tw`border border-gray-200 rounded-2xl p-4 bg-white shadow mb-4`}>
-      <View style={tw`flex-row justify-between items-center mb-2`}>
-        <Text style={tw`text-gray-500 text-sm`}>{item.date}</Text>
-        <View style={tw`bg-green-100 px-2 py-1 rounded-full`}>
-          <Text style={tw`text-green-800 font-semibold`}>Humeur : {item.mood}/10</Text>
+  const renderItem = ({ item }: { item: Entry }) => {
+    const displayDate = new Date(item.dateJournal).toLocaleDateString("fr-FR");
+    return (
+      <View style={styles.entryCard}>
+        <View style={styles.entryHeader}>
+          <Text style={styles.entryDate}>{displayDate}</Text>
+          <View style={styles.moodBadge}>
+            <Text style={styles.moodText}>Humeur : {item.humeur}/10</Text>
+          </View>
         </View>
+        <Text style={styles.entryNotes}>{item.contenu}</Text>
       </View>
-      <Text style={tw`text-green-600`}>{item.notes}</Text>
-    </View>
-  );
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={commonStyles.centered}>
+        <ActivityIndicator size="large" color={colors.olive} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={commonStyles.centered}>
+        <Text style={[typography.bodyRegular, { color: colors.red600 }]}>
+          {error}
+        </Text>
+        <TouchableOpacity
+          onPress={fetchEntries}
+          style={[commonStyles.buttonPrimary, { marginTop: 12 }]}
+        >
+          <Text style={commonStyles.buttonTextPrimary}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
-    <View style={tw`flex-1 bg-gray-50`}>
-      <ScrollView contentContainerStyle={tw`p-6`}>
-        <Text style={tw`text-3xl text-center text-green-700 font-bold mb-6`}>Journal Émotionnel</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.creamLight }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+    >
+      <View style={styles.container}>
+        <Text style={styles.screenTitle}>Journal Émotionnel</Text>
 
-        <View style={tw`mb-8`}>
-          <Text style={tw`text-lg font-semibold text-gray-700 mb-2`}>Nouvelle Entrée</Text>
-          <Text style={tw`text-sm text-gray-600 mb-1`}>Humeur (1–10)</Text>
+        <View style={styles.newEntrySection}>
+          <Text style={styles.sectionTitle}>Nouvelle Entrée</Text>
+
+          <Text style={styles.labelText}>Humeur (1–10)</Text>
           <TextInput
             keyboardType="numeric"
             value={mood}
             onChangeText={setMood}
             placeholder="Ex : 7"
-            style={tw`w-full border border-gray-300 rounded-lg p-2 mb-4`}
+            style={styles.input}
+            editable={!submitting}
           />
 
-          <Text style={tw`text-sm text-gray-600 mb-1`}>Notes</Text>
+          <Text style={styles.labelText}>Notes</Text>
           <TextInput
             value={notes}
             onChangeText={setNotes}
-            placeholder="Écrivez vos pensées..."
-            style={tw`w-full border border-gray-300 rounded-lg p-2 mb-4 h-24`}
+            placeholder="Écrivez vos pensées…"
+            style={[styles.input, styles.textArea]}
             multiline
             textAlignVertical="top"
+            editable={!submitting}
           />
 
           <TouchableOpacity
             onPress={addEntry}
-            style={tw`w-full bg-green-700 rounded-full py-3 items-center`}
+            style={[styles.addButton, submitting && { opacity: 0.6 }]}
             activeOpacity={0.8}
+            disabled={submitting}
           >
-            <Text style={tw`text-white font-semibold`}>Ajouter</Text>
+            {submitting ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <Text style={styles.addButtonText}>Ajouter</Text>
+            )}
           </TouchableOpacity>
         </View>
 
-        <View>
-          <FlatList
-            data={entries}
-            keyExtractor={item => item.id}
-            renderItem={renderItem}
-            contentContainerStyle={tw`pb-8`}
-          />
-        </View>
-      </ScrollView>
-    </View>
+        <FlatList
+          data={entries}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={() => (
+            <Text style={styles.emptyText}>
+              Votre journal est vide pour l’instant.
+            </Text>
+          )}
+        />
+      </View>
+    </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 24,
+    backgroundColor: colors.creamLight,
+  },
+  screenTitle: {
+    ...typography.h2,
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  newEntrySection: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    ...typography.h2,
+    color: colors.olive,
+    marginBottom: 8,
+  },
+  labelText: {
+    ...typography.bodyRegular,
+    color: colors.gray500,
+    marginBottom: 4,
+  },
+  input: {
+    ...commonStyles.input,
+    marginBottom: 16,
+    fontFamily: fonts.baseSans,
+  },
+  textArea: {
+    height: 120,
+  },
+  addButton: {
+    backgroundColor: colors.olive,
+    paddingVertical: 14,
+    borderRadius: 999,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  addButtonText: {
+    ...typography.buttonText,
+    color: colors.white,
+  },
+  listContent: {
+    paddingBottom: 16,
+  },
+  emptyText: {
+    ...typography.bodyRegular,
+    color: colors.gray500,
+    textAlign: "center",
+    marginTop: 32,
+  },
+  entryCard: {
+    ...commonStyles.card,
+  },
+  entryHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  entryDate: {
+    fontFamily: fonts.baseSans,
+    fontSize: 12,
+    color: colors.gray500,
+  },
+  moodBadge: {
+    backgroundColor: colors.cream,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  moodText: {
+    fontFamily: fonts.baseSans,
+    fontSize: 12,
+    color: colors.olive,
+    fontWeight: "600",
+  },
+  entryNotes: {
+    fontFamily: fonts.baseSans,
+    fontSize: 16,
+    color: colors.brownDark,
+  },
+});

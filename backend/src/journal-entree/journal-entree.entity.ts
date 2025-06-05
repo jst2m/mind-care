@@ -1,50 +1,48 @@
-// backend/src/journal-entree/journal-entree.entity.ts
-
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
+  PrimaryGeneratedColumn,
   ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
   UpdateDateColumn,
-  Index,
-} from 'typeorm';
-import { Patient } from '../patient/patient.entity';
+} from "typeorm";
+import { Patient } from "../patient/patient.entity";
 
-@Entity('journal_entree')
-@Index(['patientUuid', 'dateJournal'])
+@Entity("journal_entree")
 export class JournalEntree {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('char', { length: 36, name: 'patient_uuid' })
+  @Column("char", { length: 36 })
   patientUuid: string;
 
-  // Remplace @CreateDateColumn par un @Column avec default CURRENT_TIMESTAMP
-  @Column({
-    type: 'timestamp',
-    name: 'date_journal',
-    default: () => 'CURRENT_TIMESTAMP',
+  @ManyToOne(() => Patient, (patient) => patient.journalEntrees, {
+    nullable: false,
+    onDelete: "CASCADE",
   })
+  @JoinColumn({ name: "patientUuid" })
+  patient: Patient;
+
+  @CreateDateColumn({ type: "timestamp" })
   dateJournal: Date;
 
-  @Column()
+  @Column({ type: "varchar", length: 255, nullable: true, default: "" })
   titre: string;
 
-  @Column('text')
+  // Retirer default: "" pour la colonne TEXT
+  @Column({ type: "text", nullable: true })
   contenu: string;
 
-  @Column({ type: 'tinyint', nullable: true })
-  humeur?: number;
+  @Column({ type: "int", nullable: false })
+  humeur: number;
 
-  @Column({ type: 'json', nullable: true })
-  tags?: any;
+  @Column({ type: "varchar", length: 255, nullable: true, default: "" })
+  tags: string;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: "boolean", default: false })
   confidentiel: boolean;
 
-  @UpdateDateColumn({ name: 'date_maj' })
+  @UpdateDateColumn({ type: "timestamp" })
   dateMaj: Date;
-
-  @ManyToOne(() => Patient, p => p.uuid, { onDelete: 'CASCADE' })
-  patient: Patient;
 }

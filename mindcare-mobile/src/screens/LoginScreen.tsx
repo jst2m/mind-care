@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.tsx
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import tw from "twrnc";
@@ -8,7 +7,6 @@ import { API_HOST } from "../utils/config";
 
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
-import { storeToken } from "../utils/authStorage";
 import { useAuth } from "../contexts/AuthContext";
 
 export type RootStackParamList = {
@@ -48,10 +46,7 @@ export default function LoginScreen() {
       console.log("Body login :", data);
 
       if (!response.ok) {
-        Alert.alert(
-          "Connexion impossible",
-          data.message || "Identifiants invalides"
-        );
+        Alert.alert("Connexion impossible", data.message || "Identifiants invalides");
         return;
       }
 
@@ -61,7 +56,10 @@ export default function LoginScreen() {
         Alert.alert("Erreur", "Aucun token renvoyé par le serveur.");
         return;
       }
-      await login(data.accessToken);
+      await login(accessToken);
+
+      // On navigue vers Home (à condition que Home soit bien déclaré dans le navigator parent)
+      navigation.replace("Home");
     } catch (error) {
       console.error("Erreur au login :", error);
       Alert.alert("Erreur", "Impossible de se connecter. Veuillez réessayer.");

@@ -1,7 +1,8 @@
+// src/patient/patient.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository }              from '@nestjs/typeorm';
-import { Repository }                    from 'typeorm';
-import { Patient }                       from './patient.entity';
+import { Repository }       from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Patient }          from './patient.entity';
 
 @Injectable()
 export class PatientService {
@@ -11,28 +12,31 @@ export class PatientService {
   ) {}
 
   /**
-   * Récupère un patient à partir de son UUID.
-   * Jette NotFoundException si aucun résultat.
+   * Recherche en base le Patient dont uuid = userUuid ;
+   * s’il n’existe pas, on le crée (avec uniquement l’UUID).
    */
-  async findOne(uuid: string): Promise<Patient> {
-    const patient = await this.repo.findOneBy({ uuid });
+  async findOrCreateByUserUuid(userUuid: string): Promise<Patient> {
+    let patient = await this.repo.findOneBy({ uuid: userUuid });
     if (!patient) {
-      throw new NotFoundException(`Patient ${uuid} introuvable`);
+      // Création du nouveau patient (on conserve userUuid en tant que PK)
+      patient = this.repo.create({ uuid: userUuid });
+      await this.repo.save(patient);
     }
     return patient;
   }
 
   /**
-   * Met à jour (ou crée) le patient passé en argument.
-   * Ici on suppose que l'UUID existe toujours ;
-   * on jette si le patient n'existe pas encore.
+   * Renvoie le Patient existant ou lève NotFoundException.
    */
-  async upsert(data: Partial<Patient> & { uuid: string }): Promise<Patient> {
-    // Vérifie d'abord que le patient existe
-    await this.findOne(data.uuid);
-    // Puis mets à jour
-    await this.repo.update({ uuid: data.uuid }, data);
-    // Recharge et renvoie
-    return this.findOne(data.uuid);
+  findOne(uuid: string): Promise<Patient> {
+    return this.repo.findOneBy({ uuid })
+      .then(p => p ?? Promise.reject(new NotFoundException()));
+  }
+
+  /**
+   * Créé ou met à jour un Patient.
+   */
+  upsert(data: Partial<Patient>): Promise<Patient> {
+    return this.repo.save(data);
   }
 }

@@ -1,29 +1,44 @@
-// backend/src/patient/patient.entity.ts
+// src/patient/patient.entity.ts
+
 import {
   Entity,
   PrimaryColumn,
   Column,
   OneToOne,
+  OneToMany,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { Utilisateur } from '../utilisateur/utilisateur.entity';
-import { AesTransformer } from '../common/transformers/aes.transformer';
+} from "typeorm";
+import { Utilisateur } from "../utilisateur/utilisateur.entity";
+import { JournalEntree } from "../journal-entree/journal-entree.entity";
 
-
-@Entity()
+@Entity("patient")
 export class Patient {
-  @PrimaryColumn('char', { length: 36 })
+  @PrimaryColumn("char", { length: 36 })
   uuid: string;
 
-  @CreateDateColumn({ name: 'date_creation' })
+  @Column({ length: 100 })
+  firstname: string;
+
+  @Column({ length: 100 })
+  lastname: string;
+
+  @Column({ unique: true })
+  email: string;
+
+  @CreateDateColumn({ name: "date_creation" })
   dateCreation: Date;
 
-  @UpdateDateColumn({ name: 'date_maj' })
+  @UpdateDateColumn({ name: "date_maj" })
   dateMaj: Date;
 
-  @OneToOne(() => Utilisateur, u => u.patient)
-  @JoinColumn({ name: 'uuid' })
+  // Relation OneToOne inverse vers Utilisateur
+  @OneToOne(() => Utilisateur, (u) => u.patient)
+  @JoinColumn({ name: "uuid" })
   utilisateur: Utilisateur;
+
+  // Relation OneToMany vers JournalEntree
+  @OneToMany(() => JournalEntree, (je) => je.patient)
+  journalEntrees: JournalEntree[];
 }

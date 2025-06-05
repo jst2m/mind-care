@@ -1,16 +1,14 @@
-import { Module }          from '@nestjs/common';
-import { TypeOrmModule }   from '@nestjs/typeorm';
-import { Patient }         from './patient.entity';
-import { PatientService }  from './patient.service';
+// src/patient/patient.module.ts
+import { Module }            from '@nestjs/common';
+import { TypeOrmModule }     from '@nestjs/typeorm';
+import { Patient }           from './patient.entity';
+import { PatientService }    from './patient.service';
 import { PatientController } from './patient.controller';
-import { AuthModule }      from '../auth/auth.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Patient]),
-    AuthModule,  // pour JwtAuthGuard si besoin
-  ],
+  imports: [TypeOrmModule.forFeature([Patient])],
   providers: [PatientService],
   controllers: [PatientController],
+  exports: [PatientService],  // <-- on exporte PatientService pour qu’il soit injecté ailleurs
 })
 export class PatientModule {}

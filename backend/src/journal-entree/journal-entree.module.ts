@@ -1,14 +1,15 @@
-import { Module }                  from '@nestjs/common';
-import { TypeOrmModule }           from '@nestjs/typeorm';
-import { JournalEntree }           from './journal-entree.entity';
-import { JournalEntreeService }    from './journal-entree.service';
+// src/journal-entree/journal-entree.module.ts
+import { Module }               from '@nestjs/common';
+import { TypeOrmModule }        from '@nestjs/typeorm';
+import { JournalEntree }        from './journal-entree.entity';
+import { JournalEntreeService } from './journal-entree.service';
 import { JournalEntreeController } from './journal-entree.controller';
-import { AuthModule }              from '../auth/auth.module';
+import { PatientModule }        from '../patient/patient.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([JournalEntree]),
-    AuthModule,
+    PatientModule,       // <-- on importe le module Patient ici
   ],
   providers: [JournalEntreeService],
   controllers: [JournalEntreeController],
