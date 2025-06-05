@@ -20,11 +20,10 @@ const generateDays = (start: Date) => {
 
   const daysList = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(baseDate);
-    date.setDate(baseDate.getDate() + i);
+    date.setDate(date.getDate() + i);
     return {
       label: days[i],
       date: `${date.getDate()}`,
-      key: `${days[i]} ${date.getDate()}`,
     };
   });
 
@@ -39,42 +38,59 @@ const generateTimes = () => {
   return times;
 };
 
-// Réservations pour la semaine du 2 au 8 juin 2025
 const initialReservations: Record<string, { name: string; reason: string }> = {
-  'Lun 2 09:00': { name: 'Alice Dupont', reason: 'Suivi anxiété' },
-  'Mar 3 15:00': { name: 'Luc Bernard', reason: 'Thérapie cognitive' },
-  'Mer 4 10:00': { name: 'Claire Martin', reason: 'Consultation sommeil' },
-  'Jeu 5 14:00': { name: 'Gabriel Noel', reason: 'Bilan initial' },
-  'Ven 6 11:00': { name: 'Léa Petit', reason: 'Suivi hebdomadaire' },
-  'Sam 7 10:00': { name: 'Maxime Leroy', reason: 'Crise panique' },
+  'Jeu 5 09:00': { name: 'Alice Dupont', reason: 'Suivi anxiété' },
+  'Jeu 5 15:00': { name: 'Luc Bernard', reason: 'Thérapie cognitive' },
+  'Ven 6 10:00': { name: 'Claire Martin', reason: 'Consultation sommeil' },
+  'Ven 6 14:00': { name: 'Gabriel Noel', reason: 'Bilan initial' },
+  'Sam 7 11:00': { name: 'Léa Petit', reason: 'Suivi hebdomadaire' },
+  'Lun 9 16:00': { name: 'Maxime Leroy', reason: 'Crise panique' },
 };
 
 const Calendar: React.FC = () => {
-  const [startDate, setStartDate] = useState(new Date('2025-06-02'));
+  const [startDate, setStartDate] = useState(new Date('2025-06-05'));
   const { monthYear, daysList } = generateDays(startDate);
   const [reservations, setReservations] = useState(initialReservations);
   const [selectedSlotKey, setSelectedSlotKey] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [editedReason, setEditedReason] = useState('');
+  const [isNew, setIsNew] = useState(false);
 
   const handlePrev = () => {
     const newStart = new Date(startDate);
     newStart.setDate(newStart.getDate() - 7);
     setStartDate(newStart);
-    setSelectedSlotKey(null);
+    resetSelection();
   };
 
   const handleNext = () => {
     const newStart = new Date(startDate);
     newStart.setDate(newStart.getDate() + 7);
     setStartDate(newStart);
+    resetSelection();
+  };
+
+  const resetSelection = () => {
     setSelectedSlotKey(null);
+    setIsEditing(false);
+    setIsNew(false);
+    setEditedName('');
+    setEditedReason('');
   };
 
   const handleSlotClick = (label: string, day: string, time: string) => {
     const key = `${label} ${day} ${time}`;
     if (reservations[key]) {
       setSelectedSlotKey(key);
+      setIsEditing(false);
+      setIsNew(false);
     } else {
-      setSelectedSlotKey(null);
+      setSelectedSlotKey(key);
+      setEditedName('');
+      setEditedReason('');
+      setIsNew(true);
+      setIsEditing(true);
     }
   };
 
@@ -83,12 +99,32 @@ const Calendar: React.FC = () => {
     const updated = { ...reservations };
     delete updated[selectedSlotKey];
     setReservations(updated);
-    setSelectedSlotKey(null);
+    resetSelection();
   };
 
   const handleConfirm = () => {
-    alert('Rendez-vous confirmé !');
-    setSelectedSlotKey(null);
+    alert("Rendez-vous confirmé !");
+    resetSelection();
+  };
+
+  const handleEdit = () => {
+    if (!selectedSlotKey || !reservations[selectedSlotKey]) return;
+    const { name, reason } = reservations[selectedSlotKey];
+    setEditedName(name);
+    setEditedReason(reason);
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!selectedSlotKey || !editedName || !editedReason) return;
+    setReservations({
+      ...reservations,
+      [selectedSlotKey]: {
+        name: editedName,
+        reason: editedReason,
+      },
+    });
+    resetSelection();
   };
 
   const timeSlots = generateTimes();
@@ -97,7 +133,11 @@ const Calendar: React.FC = () => {
     <div className="calendar-wrapper">
       <button className="nav-button" onClick={handlePrev}>←</button>
       <div className="calendar">
-        <h3 className="calendar-month">{monthYear}</h3>
+        <div className="calendar-title-banner">
+  <h2>Votre espace planning</h2>
+  <h3 className="calendar-month">{monthYear}</h3>
+</div>
+
 
         <div className="calendar-header">
           {daysList.map((day, idx) => (
@@ -127,7 +167,6 @@ const Calendar: React.FC = () => {
                     key={colIdx}
                     className={`slot ${isReserved ? 'reserved' : 'available'}`}
                     onClick={() => handleSlotClick(day.label, day.date, time)}
-                    disabled={!isReserved}
                   >
                     {time}
                   </button>
@@ -137,15 +176,39 @@ const Calendar: React.FC = () => {
           ))}
         </div>
 
-        {selectedSlotKey && reservations[selectedSlotKey] && (
+        {selectedSlotKey && (
           <div className="slot-info">
-            <span>
-              <strong>{reservations[selectedSlotKey].name}</strong> – {reservations[selectedSlotKey].reason}
-            </span>
-            <div className="slot-actions">
-              <button className="confirm-btn" onClick={handleConfirm}>✔</button>
-              <button className="cancel-btn" onClick={handleCancel}>✖</button>
-            </div>
+            {isEditing ? (
+              <div className="edit-form">
+                <input
+                  type="text"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  placeholder="Nom"
+                />
+                <input
+                  type="text"
+                  value={editedReason}
+                  onChange={(e) => setEditedReason(e.target.value)}
+                  placeholder="Raison"
+                />
+                <div className="slot-actions">
+                  <button className="confirm-btn" onClick={handleSaveEdit}>💾</button>
+                  <button className="cancel-btn" onClick={resetSelection}>❌</button>
+                </div>
+              </div>
+            ) : reservations[selectedSlotKey] ? (
+              <>
+                <span>
+                  <strong>{reservations[selectedSlotKey].name}</strong> – {reservations[selectedSlotKey].reason}
+                </span>
+                <div className="slot-actions">
+                  <button className="confirm-btn" onClick={handleConfirm}>✔</button>
+                  <button className="cancel-btn" onClick={handleCancel}>✖</button>
+                  <button className="edit-btn" onClick={handleEdit}>✎</button>
+                </div>
+              </>
+            ) : null}
           </div>
         )}
       </div>
