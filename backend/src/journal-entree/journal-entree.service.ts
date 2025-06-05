@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Repository }       from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { JournalEntree }    from './journal-entree.entity';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { Repository, FindOptionsWhere } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { JournalEntree } from "./journal-entree.entity";
 
 @Injectable()
 export class JournalEntreeService {
@@ -11,7 +11,8 @@ export class JournalEntreeService {
   ) {}
 
   findAllForPatient(patientUuid: string) {
-    return this.repo.find({ where: { patientUuid } });
+    const where: FindOptionsWhere<JournalEntree> = { patientUuid };
+    return this.repo.find({ where, order: { dateJournal: "DESC" } });
   }
 
   findOne(id: number): Promise<JournalEntree> {

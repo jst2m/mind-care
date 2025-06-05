@@ -1,7 +1,14 @@
+import * as nodeCrypto from 'crypto';
+
+if (typeof globalThis.crypto === 'undefined') {
+  (globalThis as any).crypto = nodeCrypto;
+}
+
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+
 import { AuthModule } from './auth/auth.module';
 import { UtilisateurModule } from './utilisateur/utilisateur.module';
 import { PatientModule } from './patient/patient.module';
@@ -13,7 +20,7 @@ import { MessageModule } from './message/message.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -21,8 +28,8 @@ import { MessageModule } from './message/message.module';
         type: 'mysql',
         host: cs.get<string>('DB_HOST'),
         port: cs.get<number>('DB_PORT'),
-        username: cs.get<string>('DB_USERNAME'), // <-- ici
-        password: cs.get<string>('DB_PASSWORD'), // <-- ici
+        username: cs.get<string>('DB_USERNAME'),
+        password: cs.get<string>('DB_PASSWORD'),
         database: cs.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,

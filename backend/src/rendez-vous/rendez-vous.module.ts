@@ -1,14 +1,16 @@
-import { Module }            from '@nestjs/common';
-import { TypeOrmModule }     from '@nestjs/typeorm';
-import { RendezVous }        from './rendez-vous.entity';
+// src/rendez-vous/rendez-vous.module.ts
+
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RendezVous } from './rendez-vous.entity';
 import { RendezVousService } from './rendez-vous.service';
 import { RendezVousController } from './rendez-vous.controller';
-import { AuthModule }        from '../auth/auth.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([RendezVous]),
-    AuthModule,
+    AuthModule, 
   ],
   providers: [RendezVousService],
   controllers: [RendezVousController],

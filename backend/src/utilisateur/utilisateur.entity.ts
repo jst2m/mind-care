@@ -1,12 +1,22 @@
-import { Entity, PrimaryColumn, Column, OneToOne } from 'typeorm';
-// nouveau (correct) :
-import { Patient }         from '../patient/patient.entity';
-import { Professionnel }   from '../professionnel/professionnel.entity';
+// src/utilisateur/utilisateur.entity.ts
 
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  OneToOne,
+  OneToMany,    
+  JoinColumn,
+  CreateDateColumn,
+} from 'typeorm';
+import { Patient } from '../patient/patient.entity';
+import { Professionnel } from '../professionnel/professionnel.entity';
+import { Message } from '../message/message.entity'; 
 
 @Entity()
 export class Utilisateur {
-  @PrimaryColumn('char', { length: 36 }) uuid: string;
+  @PrimaryColumn('char', { length: 36 }) 
+  uuid: string;
 
   @Column({ unique: true }) email: string;
   @Column()               motDePasse: string;
@@ -29,4 +39,12 @@ export class Utilisateur {
 
   @OneToOne(() => Professionnel, pr => pr.utilisateur)
   professionnel: Professionnel;
+
+  
+  @OneToMany(() => Message, message => message.emetteur)
+  messagesEnvoyes: Message[];
+
+  
+  @OneToMany(() => Message, message => message.destinataire)
+  messagesRecus: Message[];
 }

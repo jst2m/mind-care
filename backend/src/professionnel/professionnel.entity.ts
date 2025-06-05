@@ -1,15 +1,19 @@
+// src/professionnel/professionnel.entity.ts
+
 import {
   Entity,
   PrimaryColumn,
   Column,
   OneToOne,
+  OneToMany,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Utilisateur } from '../utilisateur/utilisateur.entity';
+import { RendezVous } from '../rendez-vous/rendez-vous.entity';
 
-@Entity()
+@Entity('professionnel')
 export class Professionnel {
   @PrimaryColumn('char', { length: 36 })
   uuid: string;
@@ -32,7 +36,11 @@ export class Professionnel {
   @UpdateDateColumn({ name: 'date_maj' })
   dateMaj: Date;
 
-  @OneToOne(() => Utilisateur, u => u.professionnel)
+  @OneToOne(() => Utilisateur, (u) => u.professionnel)
   @JoinColumn({ name: 'uuid' })
   utilisateur: Utilisateur;
+
+
+  @OneToMany(() => RendezVous, (rv) => rv.professionnel)
+  rendezVous: RendezVous[];
 }

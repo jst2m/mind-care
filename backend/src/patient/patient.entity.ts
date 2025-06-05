@@ -1,33 +1,48 @@
+// src/patient/patient.entity.ts
+
 import {
   Entity,
   PrimaryColumn,
   Column,
   OneToOne,
+  OneToMany,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { Utilisateur } from '../utilisateur/utilisateur.entity';
-import { AesTransformer } from '../common/transformers/aes.transformer'; 
+} from "typeorm";
+import { Utilisateur } from "../utilisateur/utilisateur.entity";
+import { JournalEntree } from "../journal-entree/journal-entree.entity";
+import { RendezVous } from "../rendez-vous/rendez-vous.entity"; 
 
-@Entity()
+@Entity("patient")
 export class Patient {
-  @PrimaryColumn('char', { length: 36 })
+  @PrimaryColumn("char", { length: 36 })
   uuid: string;
 
-    @Column('varbinary', {
-    length: 8192,
-    nullable: true,
-    transformer: new AesTransformer(process.env.AES_SECRET || '88b7b9f428d7e1130ab88243db97df8c3fe4dcd7184da29502991a72bd80aa48'),
-  })
+  @Column({ length: 100 })
+  firstname: string;
 
-  @CreateDateColumn({ name: 'date_creation' })
+  @Column({ length: 100 })
+  lastname: string;
+
+  @Column({ unique: true })
+  email: string;
+
+  @CreateDateColumn({ name: "date_creation" })
   dateCreation: Date;
 
-  @UpdateDateColumn({ name: 'date_maj' })
+  @UpdateDateColumn({ name: "date_maj" })
   dateMaj: Date;
 
-  @OneToOne(() => Utilisateur, u => u.patient)
-  @JoinColumn({ name: 'uuid' })
+  // Relation OneToOne inverse vers Utilisateur
+  @OneToOne(() => Utilisateur, (u) => u.patient)
+  @JoinColumn({ name: "uuid" })
   utilisateur: Utilisateur;
+
+  @OneToMany(() => JournalEntree, (je) => je.patient)
+  journalEntrees: JournalEntree[];
+
+
+  @OneToMany(() => RendezVous, (rv) => rv.patient)
+  rendezVous: RendezVous[];
 }

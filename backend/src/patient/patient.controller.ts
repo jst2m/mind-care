@@ -1,12 +1,20 @@
-import { Controller, Get, Put, Body, UseGuards, Request } from '@nestjs/common';
-import { JwtAuthGuard }      from '../auth/jwt-auth.guard';
-import { PatientService }    from './patient.service';
-import { Patient }           from './patient.entity';
+// src/patient/patient.controller.ts
+import {
+  Controller,
+  Get,
+  Put,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import { JwtAuthGuard }   from '../auth/jwt-auth.guard';
+import { PatientService } from './patient.service';
+import { Patient }        from './patient.entity';
 
 @Controller('patient')
 @UseGuards(JwtAuthGuard)
 export class PatientController {
-  constructor(private svc: PatientService) {}
+  constructor(private readonly svc: PatientService) {}
 
   @Get()
   getProfile(@Request() req): Promise<Patient> {
