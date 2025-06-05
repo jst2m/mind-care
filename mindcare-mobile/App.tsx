@@ -124,26 +124,29 @@ function JournalStackNavigator() {
 const HomeStack = createNativeStackNavigator<{}>();
 
 function HomeStackNavigator() {
-  const navigation = useNavigation<any>();
-
   return (
     <HomeStack.Navigator>
       <HomeStack.Screen
         name="HomeMainAuth"
         component={HomeScreen}
-        options={{
+        options={({ navigation }) => ({
           title: "Accueil",
           headerTitleAlign: "center",
+
+          // ―――――――――――――――――――――――――――――――――――
+          // headerRight : la bulle de conversation en haut à droite
+          // ―――――――――――――――――――――――――――――――――――
           headerRight: () => (
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate("HomeTab", { screen: "Conversations" })
               }
-              style={{ marginRight: 14 }}
+              style={{ marginRight: 16 }}
             >
               <Feather name="message-circle" size={24} color={colors.olive} />
             </TouchableOpacity>
           ),
+
           headerStyle: {
             backgroundColor: colors.white,
             shadowOpacity: 0,
@@ -153,11 +156,11 @@ function HomeStackNavigator() {
             ...typography.h2,
             color: colors.brownDark,
           },
-        }}
+        })}
       />
 
       <HomeStack.Screen
-        name="SearchPros"
+        name="SearchPros" // ← exactement "SearchPros", pas "SearchPro"
         component={SearchProsScreen}
         options={{
           title: "Trouver un psy",
@@ -320,7 +323,6 @@ function ProfileStackNavigator() {
 }
 
 // --- 8) Bottom Tab Navigator pour utilisateur authentifié ---
-// Notez que l’ordre a été inversé pour placer HomeTab en premier
 const Tab = createBottomTabNavigator<{}>();
 
 function PatientTabNavigator() {
@@ -441,10 +443,7 @@ function InnerApp() {
   if (isLoading) {
     return (
       <View
-        style={[
-          commonStyles.centered,
-          { backgroundColor: colors.white },
-        ]}
+        style={[commonStyles.centered, { backgroundColor: colors.white }]}
       >
         <ActivityIndicator size="large" color={colors.green700} />
       </View>
@@ -502,5 +501,5 @@ async function registerForPushNotificationsAsync(): Promise<string | undefined> 
   return token;
 }
 
-// (styles éventuels, non modifiés)
+// (aucun style supplémentaire n'est nécessaire ici)
 const styles = StyleSheet.create({});

@@ -79,14 +79,22 @@ export default function HomeScreen() {
     if (isAuthenticated) {
       logout(); // déconnexion
     } else {
-      navigation.navigate("Login");
+      navigation.navigate("Login"); // aller à la page Login
     }
   };
 
   const handleSignupButton = () => {
     if (!isAuthenticated) {
-      navigation.navigate("Signup");
+      navigation.navigate("Signup"); // aller à la page Signup
+    } else {
+      navigation.navigate("Profile"); // si déjà connecté, aller au profil
     }
+  };
+
+  // Nouveau handler pour le bouton "Chercher un professionnel"
+  const handleSearchPro = () => {
+    navigation.navigate("SearchPros"); 
+    // Attention : vous devez avoir défini un écran "SearchPro" dans votre stack navigator
   };
 
   return (
@@ -112,7 +120,7 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Texte de présentation */}
+        {/* Présentation */}
         <View style={styles.presentationSection}>
           <Text style={styles.presentationTitle}>Pourquoi mindCare ?</Text>
           <Text style={styles.presentationParagraph}>
@@ -163,11 +171,25 @@ export default function HomeScreen() {
           />
         </View>
 
+        {/* NOUVEAU : Bouton “Chercher un professionnel” sous la section spécialités */}
+        <View style={styles.searchProContainer}>
+          <TouchableOpacity
+            style={[commonStyles.buttonPrimary, { width: "100%" }]}
+            onPress={handleSearchPro}
+            activeOpacity={0.8}
+          >
+            <Text style={commonStyles.buttonTextPrimary}>
+              Chercher un professionnel
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Boutons Connexion/Inscription ou Déconnexion/Profil */}
         <View style={styles.ctaButtons}>
           <TouchableOpacity
             style={commonStyles.buttonPrimary}
             onPress={handleAuthButton}
+            activeOpacity={0.8}
           >
             <Text style={commonStyles.buttonTextPrimary}>
               {isAuthenticated ? "Déconnexion" : "Connexion"}
@@ -177,6 +199,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={[commonStyles.buttonSecondary, { marginLeft: 12 }]}
             onPress={handleSignupButton}
+            activeOpacity={0.8}
           >
             <Text style={commonStyles.buttonTextPrimary}>
               {isAuthenticated ? "Profil" : "Inscription"}
@@ -188,6 +211,7 @@ export default function HomeScreen() {
   );
 }
 
+// Styles complémentaires pour HomeScreen
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
@@ -300,6 +324,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "right",
   },
+
+  // ** Nouveau : conteneur pour le bouton “Chercher un professionnel” **
+  searchProContainer: {
+    marginBottom: 24,
+    alignItems: "center",
+  },
+
   ctaButtons: {
     flexDirection: "row",
     justifyContent: "center",

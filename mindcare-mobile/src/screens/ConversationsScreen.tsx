@@ -1,6 +1,6 @@
 // src/screens/ConversationsScreen.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useLayoutEffect } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { apiFetch } from "../utils/api";
 import { colors, typography, commonStyles } from "../styles/theme";
 import { useAuth } from "../contexts/AuthContext";
 
+// Structure d’un message tel que renvoyé par votre API
 type Message = {
   id: number;
   deUuid: string;
@@ -35,8 +36,31 @@ export default function ConversationsScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // `navigation` pour naviguer et pour setOptions(...)
   const navigation = useNavigation<any>();
 
+  // === 1. on ajoute l’icône “bulle” dans le header ===
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      // Cette option dépend de la version de React Navigation que vous utilisez.
+      // Ici, on l’écrit comme si vous étiez dans un Stack.Screen (v5/v6).
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => {
+            // Redirige vers la même page Conversations (ou vers l’écran de votre liste de convos)
+            navigation.navigate("Conversations");
+          }}
+          style={{ marginRight: 16 }}
+          activeOpacity={0.7}
+        >
+          {/* Vous pouvez remplacer ce Text par une vraie icône */}
+          <Text style={{ fontSize: 22, color: colors.olive }}>💬</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
+  // === 2. on va chercher et groupons les conversations ===
   useEffect(() => {
     fetchConversations();
   }, []);
@@ -46,19 +70,27 @@ export default function ConversationsScreen() {
       setLoading(true);
       setError(null);
 
-      // 1) Récupère tous les messages
+      if (!user) {
+        setError("Vous devez être connecté(e) pour voir vos conversations.");
+        return;
+      }
+
+      // 2.1) Récupérer tous les messages
       const allMessages = await apiFetch<Message[]>("/messages");
 
-      // 2) Filtre ceux du patient connecté
+      // 2.2) Ne garder que ceux du patient connecté
       const messagesPatient = allMessages.filter(
-        (m) => m.deUuid === user?.uuid || m.aUuid === user?.uuid
+        (m) => m.deUuid === user.uuid || m.aUuid === user.uuid
       );
 
-      // 3) Groupe par proUuid (dernier message en date)
+      // 2.3) Grouper par proUuid → ne garder que le dernier message
       const grouped: Record<string, Message> = {};
       messagesPatient.forEach((msg) => {
-        const proUuid = msg.deUuid === user?.uuid ? msg.aUuid : msg.deUuid;
+        // si le message vient du patient, alors proUuid = destinataire (aUuid)
+        // sinon (venant du pro), proUuid = émetteur (deUuid)
+        const proUuid = msg.deUuid === user.uuid ? msg.aUuid : msg.deUuid;
 
+        // Convertir le contenu en chaîne de caractères
         let textMsg = "";
         if (typeof msg.contenu === "string") {
           textMsg = msg.contenu;
@@ -70,6 +102,7 @@ export default function ConversationsScreen() {
           textMsg = String.fromCharCode(...msg.contenu.data);
         }
 
+        // Garder uniquement le message le plus récent pour ce proUuid
         if (
           !grouped[proUuid] ||
           new Date(msg.dateEnvoi) > new Date(grouped[proUuid].dateEnvoi)
@@ -81,14 +114,73 @@ export default function ConversationsScreen() {
         }
       });
 
-      const result: ConversationItem[] = Object.keys(grouped).map((proUuid) => ({
-        professionnelUuid: proUuid,
-        professionnelName: "",
-        lastMessage: grouped[proUuid].contenu as string,
-        lastDate: grouped[proUuid].dateEnvoi,
-      }));
+      // 2.4) Créer un tableau intermédiaire sans encore le prénom/nom
+      const rawConversations: ConversationItem[] = Object.keys(grouped).map(
+        (proUuid) => ({
+          professionnelUuid: proUuid,
+          professionnelName: "",
+          lastMessage: grouped[proUuid].contenu as string,
+          lastDate: grouped[proUuid].dateEnvoi,
+        })
+      );
 
-      setConversations(result);
+      // 2.5) Pour chaque proUuid, appeler l’API pour récupérer prénom + nom
+      const tempNamesMap: Record<string, string> = {};
+      await Promise.all(
+        rawConversations.map(async (conv) => {
+          try {
+            // Appelle /professionnels/:proUuid → on suppose que l’API renvoie { uuid, prenom, nom }
+            const pro = await apiFetch<any>(
+              `/professionnels/${conv.professionnelUuid}`
+            );
+
+            // Pour debug : voir la forme exacte de la réponse
+            console.log(
+              `RÉPONSE /professionnels/${conv.professionnelUuid}`,
+              pro
+            );
+
+            let displayName: string;
+            // a) si le prénom/nom sont à la racine
+            if (pro.prenom || pro.nom) {
+              displayName = `${pro.prenom ?? ""} ${pro.nom ?? ""}`.trim();
+            }
+            // b) sinon, si l’API imbrique l’utilisateur dans `utilisateur`
+            else if (
+              pro.utilisateur &&
+              (pro.utilisateur.prenom || pro.utilisateur.nom)
+            ) {
+              displayName = `${pro.utilisateur.prenom ?? ""} ${
+                pro.utilisateur.nom ?? ""
+              }`.trim();
+            }
+            // c) fallback : tronquer l’UUID
+            else {
+              displayName = conv.professionnelUuid.substring(0, 6);
+            }
+
+            tempNamesMap[conv.professionnelUuid] = displayName;
+          } catch (e) {
+            console.warn(
+              `Impossible de récupérer le nom du pro ${conv.professionnelUuid}:`,
+              e
+            );
+            tempNamesMap[conv.professionnelUuid] = conv.professionnelUuid.substring(0, 6);
+          }
+        })
+      );
+
+      // 2.6) Construire la liste finale en injectant `professionnelName`
+      const finalConversations: ConversationItem[] = rawConversations.map(
+        (conv) => ({
+          ...conv,
+          professionnelName:
+            tempNamesMap[conv.professionnelUuid] ||
+            conv.professionnelUuid.substring(0, 6),
+        })
+      );
+
+      setConversations(finalConversations);
     } catch (e: any) {
       console.error("Erreur fetch convos :", e);
       setError("Impossible de charger vos conversations.");
@@ -97,6 +189,7 @@ export default function ConversationsScreen() {
     }
   };
 
+  // === 3. Affichage en fonction des états ===
   if (loading) {
     return (
       <View style={commonStyles.centered}>
@@ -126,8 +219,8 @@ export default function ConversationsScreen() {
   }
 
   const renderItem = ({ item }: { item: ConversationItem }) => {
-    const date = new Date(item.lastDate);
-    const formatted = `${date.toLocaleDateString("fr-FR")} ${date.toLocaleTimeString("fr-FR", {
+    const dateObj = new Date(item.lastDate);
+    const formatted = `${dateObj.toLocaleDateString("fr-FR")} ${dateObj.toLocaleTimeString("fr-FR", {
       hour: "2-digit",
       minute: "2-digit",
     })}`;
@@ -135,22 +228,19 @@ export default function ConversationsScreen() {
     return (
       <TouchableOpacity
         style={styles.convoCard}
+        activeOpacity={0.7}
         onPress={() =>
           navigation.navigate("HomeTab", {
             screen: "Chat",
             params: {
               professionnelUuid: item.professionnelUuid,
-              professionnelName:
-                item.professionnelName || item.professionnelUuid.substring(0, 6),
+              professionnelName: item.professionnelName,
             },
           })
         }
-        activeOpacity={0.7}
       >
         <View>
-          <Text style={styles.convoTitle}>
-            {item.professionnelName || item.professionnelUuid.substring(0, 6)}
-          </Text>
+          <Text style={styles.convoTitle}>{item.professionnelName}</Text>
           <Text style={styles.convoSubtitle} numberOfLines={1}>
             {item.lastMessage}
           </Text>
