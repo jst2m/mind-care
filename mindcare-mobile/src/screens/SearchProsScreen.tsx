@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  SafeAreaView,
   View,
   TextInput,
   FlatList,
@@ -14,7 +13,8 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { apiFetch } from "../utils/api";
-import { colors, typography, commonStyles, fonts } from "../styles/theme";
+
+import { colors, typography, commonStyles } from "../styles/theme";
 
 type ProsItem = {
   uuid: string;
@@ -34,13 +34,6 @@ export default function SearchProsScreen() {
   const [loading, setLoading] = useState<boolean>(false);
   const navigation = useNavigation<any>();
 
-  useEffect(() => {
-    const handle = setTimeout(() => {
-      fetchPros(searchTerm);
-    }, 400);
-    return () => clearTimeout(handle);
-  }, [searchTerm]);
-
   const fetchPros = async (term: string) => {
     try {
       setLoading(true);
@@ -59,13 +52,23 @@ export default function SearchProsScreen() {
     }
   };
 
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      fetchPros(searchTerm);
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [searchTerm]);
+
   const renderItem = ({ item }: { item: ProsItem }) => (
     <View style={styles.itemContainer}>
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate("ChatScreen", {
-            professionnelUuid: item.uuid,
-            professionnelName: `${item.utilisateur.prenom} ${item.utilisateur.nom}`,
+          navigation.navigate("HomeTab", {
+            screen: "Chat",
+            params: {
+              professionnelUuid: item.uuid,
+              professionnelName: `${item.utilisateur.prenom} ${item.utilisateur.nom}`,
+            },
           });
         }}
         style={styles.iconButton}
@@ -76,9 +79,12 @@ export default function SearchProsScreen() {
       <TouchableOpacity
         style={styles.infoContainer}
         onPress={() => {
-          navigation.navigate("ProProfile", {
-            professionnelUuid: item.uuid,
-            professionnelName: `${item.utilisateur.prenom} ${item.utilisateur.nom}`,
+          navigation.navigate("HomeTab", {
+            screen: "ProProfile",
+            params: {
+              professionnelUuid: item.uuid,
+              professionnelName: `${item.utilisateur.prenom} ${item.utilisateur.nom}`,
+            },
           });
         }}
       >
@@ -91,7 +97,7 @@ export default function SearchProsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.container}>
       <View style={styles.searchContainer}>
         <TextInput
           placeholder="Rechercher un professionnel"
@@ -116,12 +122,12 @@ export default function SearchProsScreen() {
           )}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: colors.creamLight,
   },
@@ -156,13 +162,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemTitle: {
-    fontFamily: fonts.baseSans,
     fontSize: 16,
     fontWeight: "600",
     color: colors.brownDark,
   },
   itemSubtitle: {
-    fontFamily: fonts.baseSans,
     fontSize: 14,
     color: colors.gray500,
   },

@@ -42,7 +42,7 @@ import { apiFetch } from "./src/utils/api";
 
 import { colors, typography, commonStyles } from "./src/styles/theme";
 
-// === Configuration des notifications ===
+// --- 1) Configuration des notifications ---
 Notifications.setNotificationHandler({
   handleNotification: async (): Promise<Notifications.NotificationBehavior> => ({
     shouldShowAlert: true,
@@ -53,8 +53,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// === Public Stack (Home, Login, Signup) ===
-
+// --- 2) Public Stack (HomePublic, Login, Signup) ---
 const PublicStack = createNativeStackNavigator<{}>();
 
 function PublicStackNavigator() {
@@ -67,8 +66,7 @@ function PublicStackNavigator() {
   );
 }
 
-// === 1) Authenticated: RendezVous Stack ===
-
+// --- 3) RendezVous Stack (Appointments) ---
 const RendezVousStack = createNativeStackNavigator<{}>();
 
 function RendezVousStackNavigator() {
@@ -95,8 +93,7 @@ function RendezVousStackNavigator() {
   );
 }
 
-// === 2) Authenticated: Journal Stack ===
-
+// --- 4) Journal Stack (JournalHome) ---
 const JournalStack = createNativeStackNavigator<{}>();
 
 function JournalStackNavigator() {
@@ -123,8 +120,7 @@ function JournalStackNavigator() {
   );
 }
 
-// === 3) Authenticated: Home Stack (avec SearchPros, ProProfile, Conversations, Chat) ===
-
+// --- 5) Home Stack (HomeMainAuth, SearchPros, ProProfile, Conversations, Chat) ---
 const HomeStack = createNativeStackNavigator<{}>();
 
 function HomeStackNavigator() {
@@ -140,7 +136,9 @@ function HomeStackNavigator() {
           headerTitleAlign: "center",
           headerRight: () => (
             <TouchableOpacity
-              onPress={() => navigation.navigate("Conversations")}
+              onPress={() =>
+                navigation.navigate("HomeTab", { screen: "Conversations" })
+              }
               style={{ marginRight: 14 }}
             >
               <Feather name="message-circle" size={24} color={colors.olive} />
@@ -233,8 +231,7 @@ function HomeStackNavigator() {
   );
 }
 
-// === 4) Authenticated: Exercises Stack ===
-
+// --- 6) Exercises Stack (ExercisesList, ExerciseDetail, ExerciseFinished) ---
 const ExercisesStack = createNativeStackNavigator<{}>();
 
 function ExercisesStackNavigator() {
@@ -295,8 +292,7 @@ function ExercisesStackNavigator() {
   );
 }
 
-// === 5) Authenticated: Profile Stack ===
-
+// --- 7) Profile Stack (ProfileHome) ---
 const ProfileStack = createNativeStackNavigator<{}>();
 
 function ProfileStackNavigator() {
@@ -323,8 +319,7 @@ function ProfileStackNavigator() {
   );
 }
 
-// === 6) Bottom Tab Navigator (pour utilisateur authentifié) ===
-
+// --- 8) Bottom Tab Navigator for authenticated user ---
 const Tab = createBottomTabNavigator<{}>();
 
 function PatientTabNavigator() {
@@ -391,8 +386,7 @@ function PatientTabNavigator() {
   );
 }
 
-// === 7) Composant principal App + InnerApp pour l’authentification & notifications ===
-
+// --- 9) Main App + InnerApp for auth logic ---
 export default function App() {
   return (
     <AuthProvider>
@@ -408,7 +402,7 @@ function InnerApp() {
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    // Initialisation notifications push
+    // Init push notifications
     registerForPushNotificationsAsync()
       .then((token) => {
         if (token) {
@@ -463,8 +457,7 @@ function InnerApp() {
   );
 }
 
-// === 8) Fonction d’enregistrement pour notifications push ===
-
+// --- 10) Register for push notifications ---
 async function registerForPushNotificationsAsync(): Promise<string | undefined> {
   let token: string | undefined;
 
@@ -505,5 +498,5 @@ async function registerForPushNotificationsAsync(): Promise<string | undefined> 
 }
 
 const styles = StyleSheet.create({
-  // styles globaux si nécessaire
+  // (optionnel)
 });

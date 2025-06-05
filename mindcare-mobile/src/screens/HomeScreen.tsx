@@ -21,11 +21,17 @@ export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const { isAuthenticated, logout } = useAuth();
 
-  const goToAuth = (screen: "Login" | "Signup") => {
+  const handleAuthButton = () => {
     if (isAuthenticated) {
-      logout();
+      logout(); // déconnexion
     } else {
-      navigation.navigate(screen);
+      navigation.navigate("Login");
+    }
+  };
+
+  const handleSignupButton = () => {
+    if (!isAuthenticated) {
+      navigation.navigate("Signup");
     }
   };
 
@@ -33,12 +39,13 @@ export default function HomeScreen() {
     if (isAuthenticated) {
       navigation.navigate("SearchPros");
     } else {
-      goToAuth("Login");
+      navigation.navigate("Login");
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
+      {/* Image hero */}
       <ImageBackground
         source={require("../../assets/hero.jpg")}
         style={styles.heroImage}
@@ -58,7 +65,7 @@ export default function HomeScreen() {
           <View style={styles.ctaButtons}>
             <TouchableOpacity
               style={commonStyles.buttonPrimary}
-              onPress={() => goToAuth("Login")}
+              onPress={handleAuthButton}
             >
               <Text style={commonStyles.buttonTextPrimary}>
                 {isAuthenticated ? "Déconnexion" : "Connexion"}
@@ -66,7 +73,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[commonStyles.buttonSecondary, { marginLeft: 12 }]}
-              onPress={() => goToAuth("Signup")}
+              onPress={handleSignupButton}
             >
               <Text style={commonStyles.buttonTextPrimary}>
                 {isAuthenticated ? "Profil" : "Inscription"}
