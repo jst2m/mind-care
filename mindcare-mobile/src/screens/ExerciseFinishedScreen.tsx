@@ -21,7 +21,7 @@ export default function ExerciseFinishedScreen() {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require("../../assets/34D43885-0F23-497F-BC02-FCBC15021C80.jpg")}
+        source={require("../../assets/finished.jpg")}
         style={styles.backgroundImage}
         resizeMode="cover"
       >

@@ -360,7 +360,7 @@ function PatientTabNavigator() {
       <Tab.Screen
         name="RendezVousTab"
         component={RendezVousStackNavigator}
-        options={{ title: "Rendez-vous" }}
+        options={{ title: "RDV" }}
       />
       <Tab.Screen
         name="JournalTab"

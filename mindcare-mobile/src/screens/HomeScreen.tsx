@@ -10,12 +10,66 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  FlatList,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
 import { commonStyles, typography, colors } from "../styles/theme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+// Illustrations statiques pour chaque trouble
+const ILLUSTRATIONS: Record<string, any> = {
+  anxiete: require("../../assets/anxiete.png"),
+  depression: require("../../assets/depression.png"),
+  tca: require("../../assets/tca.png"),
+  sommeil: require("../../assets/sommeil.png"),
+  addictions: require("../../assets/addictions.png"),
+};
+
+// Données statiques “Nos spécialités”
+const SPECIALTIES = [
+  {
+    key: "anxiete",
+    title: "Anxiété",
+    description:
+      "Sentiment d’inquiétude ou peur persistante ; le psychologue peut vous aider à gérer vos pensées anxieuses.",
+    icon: "😰",
+    specialistType: "Psychologue clinicien",
+  },
+  {
+    key: "depression",
+    title: "Dépression",
+    description:
+      "Humeur dépressive durable, perte d’intérêt, fatigue ; un psychiatre ou psychologue peut proposer un suivi adapté.",
+    icon: "😔",
+    specialistType: "Psychiatre ou Psychologue",
+  },
+  {
+    key: "tca",
+    title: "Troubles alimentaires",
+    description:
+      "Anorexie, boulimie, troubles du comportement alimentaire ; une prise en charge pluridisciplinaire (diététicien + psychologue) est souvent recommandée.",
+    icon: "🍽️",
+    specialistType: "Diététicien & Psychologue",
+  },
+  {
+    key: "sommeil",
+    title: "Troubles du sommeil",
+    description:
+      "Insomnies, cauchemars, réveils nocturnes ; un psychologue ou médecin du sommeil pourra vous accompagner.",
+    icon: "🌙",
+    specialistType: "Médecin du sommeil",
+  },
+  {
+    key: "addictions",
+    title: "Addictions",
+    description:
+      "Dépendance à l’alcool, drogues, jeux ; des addictologues et psychologues spécialisés peuvent vous soutenir.",
+    icon: "🔗",
+    specialistType: "Addictologue",
+  },
+];
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
@@ -35,14 +89,6 @@ export default function HomeScreen() {
     }
   };
 
-  const goToSearchPros = () => {
-    if (isAuthenticated) {
-      navigation.navigate("SearchPros");
-    } else {
-      navigation.navigate("Login");
-    }
-  };
-
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       {/* Image hero */}
@@ -57,45 +103,7 @@ export default function HomeScreen() {
       </ImageBackground>
 
       <View style={styles.mainContent}>
-        <View style={styles.introSection}>
-          <Text style={styles.introTitle}>Rejoignez la communauté mindCare</Text>
-          <Text style={styles.introParagraph}>
-            Prenez soin de votre santé mentale aux côtés de milliers de membres.
-          </Text>
-          <View style={styles.ctaButtons}>
-            <TouchableOpacity
-              style={commonStyles.buttonPrimary}
-              onPress={handleAuthButton}
-            >
-              <Text style={commonStyles.buttonTextPrimary}>
-                {isAuthenticated ? "Déconnexion" : "Connexion"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[commonStyles.buttonSecondary, { marginLeft: 12 }]}
-              onPress={handleSignupButton}
-            >
-              <Text style={commonStyles.buttonTextPrimary}>
-                {isAuthenticated ? "Profil" : "Inscription"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.findProsContainer}>
-          <Text style={styles.findProsIntro}>
-            Trouvez un spécialiste dès maintenant
-          </Text>
-          <TouchableOpacity
-            style={commonStyles.buttonPrimary}
-            onPress={goToSearchPros}
-          >
-            <Text style={commonStyles.buttonTextPrimary}>
-              Trouver un psy
-            </Text>
-          </TouchableOpacity>
-        </View>
-
+        {/* Image intermédiaire */}
         <View style={styles.imageContainer}>
           <Image
             source={require("../../assets/happy.png")}
@@ -104,6 +112,7 @@ export default function HomeScreen() {
           />
         </View>
 
+        {/* Texte de présentation */}
         <View style={styles.presentationSection}>
           <Text style={styles.presentationTitle}>Pourquoi mindCare ?</Text>
           <Text style={styles.presentationParagraph}>
@@ -119,6 +128,60 @@ export default function HomeScreen() {
             Trouvez un professionnel qui saura vous aider au mieux, grâce à
             notre annuaire sécurisé.
           </Text>
+        </View>
+
+        {/* Section “Nos spécialités” */}
+        <View style={styles.specialtiesSection}>
+          <Text style={styles.specialtiesTitle}>Nos spécialités</Text>
+          <Text style={styles.specialtiesIntro}>
+            MindCare travaille avec des professionnels compétents sur différents troubles :
+          </Text>
+
+          <FlatList
+            data={SPECIALTIES}
+            keyExtractor={(item) => item.key}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingVertical: 8 }}
+            renderItem={({ item }) => (
+              <View style={styles.specialtyCard}>
+                <Image
+                  source={ILLUSTRATIONS[item.key]}
+                  style={styles.specialtyImage}
+                  resizeMode="cover"
+                />
+                <Text style={styles.specialtyIcon}>{item.icon}</Text>
+                <Text style={styles.specialtyTitleCard}>{item.title}</Text>
+                <Text style={styles.specialtyDescCard} numberOfLines={3}>
+                  {item.description}
+                </Text>
+                <Text style={styles.specialtyPro}>
+                  Pro recommandé : {item.specialistType}
+                </Text>
+              </View>
+            )}
+          />
+        </View>
+
+        {/* Boutons Connexion/Inscription ou Déconnexion/Profil */}
+        <View style={styles.ctaButtons}>
+          <TouchableOpacity
+            style={commonStyles.buttonPrimary}
+            onPress={handleAuthButton}
+          >
+            <Text style={commonStyles.buttonTextPrimary}>
+              {isAuthenticated ? "Déconnexion" : "Connexion"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[commonStyles.buttonSecondary, { marginLeft: 12 }]}
+            onPress={handleSignupButton}
+          >
+            <Text style={commonStyles.buttonTextPrimary}>
+              {isAuthenticated ? "Profil" : "Inscription"}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -154,36 +217,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 16,
   },
-  introSection: {
-    marginBottom: 16,
-    alignItems: "center",
-  },
-  introTitle: {
-    ...typography.h2,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  introParagraph: {
-    ...typography.bodyRegular,
-    textAlign: "center",
-    color: colors.gray500,
-    marginBottom: 16,
-  },
-  ctaButtons: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-  findProsContainer: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  findProsIntro: {
-    ...typography.bodyMedium,
-    textAlign: "center",
-    color: colors.brownDark,
-    marginBottom: 8,
-  },
   imageContainer: {
     alignItems: "center",
     marginBottom: 24,
@@ -205,5 +238,71 @@ const styles = StyleSheet.create({
     color: colors.gray500,
     marginBottom: 12,
     textAlign: "center",
+  },
+  specialtiesSection: {
+    marginBottom: 32,
+  },
+  specialtiesTitle: {
+    ...typography.h2,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  specialtiesIntro: {
+    ...typography.bodyRegular,
+    textAlign: "center",
+    color: colors.gray500,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+  },
+  specialtyCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    width: SCREEN_WIDTH * 0.6,
+    marginRight: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.gray200,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  specialtyImage: {
+    width: "100%",
+    height: SCREEN_WIDTH * 0.3,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  specialtyIcon: {
+    fontSize: 28,
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  specialtyTitleCard: {
+    ...typography.bodyMedium,
+    fontWeight: "600",
+    color: colors.brownDark,
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  specialtyDescCard: {
+    ...typography.bodyRegular,
+    color: colors.gray500,
+    fontSize: 13,
+    marginBottom: 8,
+    textAlign: "left",
+  },
+  specialtyPro: {
+    ...typography.bodyRegular,
+    fontStyle: "italic",
+    color: colors.olive,
+    fontSize: 12,
+    textAlign: "right",
+  },
+  ctaButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 24,
   },
 });

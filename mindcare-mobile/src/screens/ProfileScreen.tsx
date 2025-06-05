@@ -1,216 +1,476 @@
 // src/screens/ProfileScreen.tsx
-
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  ActivityIndicator,
-  StyleSheet,
-  ScrollView,
+  TextInput,
   TouchableOpacity,
   Alert,
+  ScrollView,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { apiFetch } from "../utils/api";
-
-import { colors, typography, commonStyles } from "../styles/theme";
-
-type UtilisateurProfile = {
-  uuid: string;
-  email: string;
-  prenom: string;
-  nom: string;
-  telephone?: string;
-  adresse?: string;
-  codePostal?: string;
-  ville?: string;
-  dateNaissance?: string;
-  sexe: string;
-  role: string;
-};
+import { typography, colors, commonStyles } from "../styles/theme";
 
 export default function ProfileScreen() {
-  const { accessToken, logout } = useAuth();
-  const [userData, setUserData] = useState<UtilisateurProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, isAuthenticated, logout, refreshUser, isLoading } = useAuth();
+  const [editing, setEditing] = useState(false);
 
+  // États locaux des champs du formulaire
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
+  const [email, setEmail] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [adresse, setAdresse] = useState("");
+  const [codePostal, setCodePostal] = useState("");
+  const [ville, setVille] = useState("");
+  const [dateNaissance, setDateNaissance] = useState("");
+  const [sexe, setSexe] = useState<"Homme" | "Femme" | "Ne préfère pas dire">(
+    "Homme"
+  );
+
+  // Dès que `user` change (après chargement initial ou refresh), on remplit les champs
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    if (user) {
+      setPrenom(user.prenom || "");
+      setNom(user.nom || "");
+      setEmail(user.email || "");
+      setTelephone(user.telephone || "");
+      setAdresse(user.adresse || "");
+      setCodePostal(user.codePostal || "");
+      setVille(user.ville || "");
+      if (user.dateNaissance) {
+        const d = new Date(user.dateNaissance);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        setDateNaissance(`${yyyy}-${mm}-${dd}`);
+      } else {
+        setDateNaissance("");
+      }
+      setSexe((user.sexe as any) || "Homme");
+    }
+  }, [user]);
 
-  const fetchProfile = async () => {
-    if (!accessToken) {
-      setError("Non authentifié");
-      setLoading(false);
+  // Tant qu’on charge le contexte ou que (on n’est pas authentifié), on peut afficher un loader générique
+  if (isLoading) {
+    return (
+      <View
+        style={[
+          commonStyles.centered,
+          { flex: 1, backgroundColor: colors.creamLight },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.green700} />
+        <Text
+          style={[typography.bodyRegular, { color: colors.gray500, marginTop: 8 }]}
+        >
+          Chargement du profil…
+        </Text>
+      </View>
+    );
+  }
+
+  // Si, à ce stade, on n’est PAS authentifié, on affiche “Vous n’êtes pas connecté” :
+  if (!isAuthenticated) {
+    return (
+      <View
+        style={[
+          commonStyles.centered,
+          { flex: 1, backgroundColor: colors.creamLight, paddingHorizontal: 24 },
+        ]}
+      >
+        <Text style={[typography.bodyRegular, { color: colors.gray500 }]}>
+          Vous n’êtes pas connecté.
+        </Text>
+        {/* 
+          Ici, vous pouvez rediriger vers le login si besoin
+        */}
+      </View>
+    );
+  }
+
+  // À partir d’ici, isAuthenticated === true ET user est non-null
+  // (car dans AuthContext, isAuthenticated = !!accessToken && !!user)
+
+  const startEditing = () => {
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    // On remet les valeurs d’origine à partir de `user`
+    setPrenom(user.prenom || "");
+    setNom(user.nom || "");
+    setEmail(user.email || "");
+    setTelephone(user.telephone || "");
+    setAdresse(user.adresse || "");
+    setCodePostal(user.codePostal || "");
+    setVille(user.ville || "");
+    if (user.dateNaissance) {
+      const d = new Date(user.dateNaissance);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      setDateNaissance(`${yyyy}-${mm}-${dd}`);
+    } else {
+      setDateNaissance("");
+    }
+    setSexe((user.sexe as any) || "Homme");
+    setEditing(false);
+  };
+
+  const handleSave = async () => {
+    // Validation minimale : prénom, nom, email
+    if (!prenom.trim() || !nom.trim() || !email.trim()) {
+      Alert.alert("Erreur", "Prénom, nom et email sont obligatoires.");
       return;
     }
 
     try {
-      setLoading(true);
-      setError(null);
+      // On regroupe désormais tous les champs dans un seul payload pour /utilisateur/:uuid
+      const payloadComplet = {
+        prenom: prenom.trim(),
+        nom: nom.trim(),
+        email: email.trim(),
+        telephone: telephone.trim() || null,
+        adresse: adresse.trim() || null,
+        codePostal: codePostal.trim() || null,
+        ville: ville.trim() || null,
+        dateNaissance: dateNaissance.trim() || null, // format YYYY-MM-DD
+        sexe,
+      };
 
-      const authTest = await apiFetch<{ user: { sub: string; role: string } }>(
-        "/auth/test"
-      );
-      const userUuid = authTest.user.sub;
+      await apiFetch(`/utilisateur/${user.uuid}`, {
+        method: "PUT",
+        body: JSON.stringify(payloadComplet),
+      });
 
-      const data = await apiFetch<UtilisateurProfile>(
-        `/utilisateur/${userUuid}`
-      );
-      setUserData(data);
-    } catch (e: any) {
-      console.error("Profile fetch erreur →", e);
-      if (e.message.includes("404")) {
-        setError("Profil introuvable (404).");
-      } else if (e.message.includes("401")) {
-        setError("Token invalide ou non autorisé (401).");
-      } else {
-        setError("Impossible de charger le profil.");
-      }
-    } finally {
-      setLoading(false);
+      // On rafraîchit l’utilisateur en mémoire pour récupérer les dernières données
+      await refreshUser();
+
+      Alert.alert("Succès", "Vos informations ont été mises à jour.", [
+        {
+          text: "OK",
+          onPress: () => setEditing(false),
+        },
+      ]);
+    } catch (err: any) {
+      console.warn("Erreur mise à jour profil :", err);
+      Alert.alert("Erreur", err.message || "Mise à jour impossible.");
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      "Déconnexion",
-      "Êtes-vous sûr·e de vouloir vous déconnecter ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "OK",
-          onPress: async () => {
-            await logout();
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  if (loading) {
+  // --- AFFICHAGE « Lecture SEULE » ---
+  if (!editing) {
     return (
-      <View style={commonStyles.centered}>
-        <ActivityIndicator size="large" color={colors.olive} />
-      </View>
-    );
-  }
+      <ScrollView style={styles.container}>
+        {/* En‐tête / avatar */}
+        <View style={styles.avatarContainer}>
+          <Image
+            source={require("../../assets/avatar-placeholder.png")}
+            style={styles.avatar}
+          />
+        </View>
 
-  if (error || !userData) {
-    return (
-      <View style={commonStyles.centered}>
-        <Text style={[typography.bodyRegular, { color: colors.red600 }]}>
-          {error || "Erreur lors du chargement des données."}
-        </Text>
-      </View>
-    );
-  }
-
-  const formattedBirthDate = userData.dateNaissance
-    ? new Date(userData.dateNaissance).toLocaleDateString("fr-FR")
-    : "N/A";
-
-  return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.profileContainer}>
-        <Text style={[typography.h2, { color: colors.brownDark }]}>
-          Bonjour, {userData.prenom} {userData.nom} !
+        <Text style={styles.greeting}>
+          Bonjour{user.prenom || user.nom ? ", " : ""}{" "}
+          <Text style={styles.greetingName}>
+            {user.prenom} {user.nom}
+          </Text>{" "}
+          !
         </Text>
 
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Prénom</Text>
-          <Text style={styles.value}>{userData.prenom}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Nom</Text>
-          <Text style={styles.value}>{userData.nom}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>E-mail</Text>
-          <Text style={styles.value}>{userData.email}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Téléphone</Text>
-          <Text style={styles.value}>{userData.telephone || "N/A"}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Adresse</Text>
-          <Text style={styles.value}>{userData.adresse || "N/A"}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Code Postal</Text>
-          <Text style={styles.value}>{userData.codePostal || "N/A"}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Ville</Text>
-          <Text style={styles.value}>{userData.ville || "N/A"}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Date de naissance</Text>
-          <Text style={styles.value}>{formattedBirthDate}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Sexe</Text>
-          <Text style={styles.value}>{userData.sexe}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Rôle</Text>
-          <Text style={styles.value}>{userData.role}</Text>
+        {/* Prénom */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.fieldLabel}>Prénom</Text>
+          <Text style={styles.fieldValue}>{user.prenom || "Non communiqué"}</Text>
         </View>
 
+        {/* Nom */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.fieldLabel}>Nom</Text>
+          <Text style={styles.fieldValue}>{user.nom || "Non communiqué"}</Text>
+        </View>
+
+        {/* E-mail */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.fieldLabel}>E-mail</Text>
+          <Text style={styles.fieldValue}>{user.email || "Non communiqué"}</Text>
+        </View>
+
+        {/* Téléphone */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.fieldLabel}>Téléphone</Text>
+          <Text style={styles.fieldValue}>{user.telephone || "Non communiqué"}</Text>
+        </View>
+
+        {/* Adresse */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.fieldLabel}>Adresse</Text>
+          <Text style={styles.fieldValue}>
+            {user.adresse && user.codePostal && user.ville
+              ? `${user.adresse}, ${user.codePostal} ${user.ville}`
+              : "Non communiqué"}
+          </Text>
+        </View>
+
+        {/* Date de naissance */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.fieldLabel}>Date de naissance</Text>
+          <Text style={styles.fieldValue}>
+            {user.dateNaissance
+              ? new Date(user.dateNaissance).toLocaleDateString("fr-FR")
+              : "Non communiqué"}
+          </Text>
+        </View>
+
+        {/* Sexe */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.fieldLabel}>Sexe</Text>
+          <Text style={styles.fieldValue}>{user.sexe || "Non communiqué"}</Text>
+        </View>
+
+        {/* Rôle */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.fieldLabel}>Rôle</Text>
+          <Text style={styles.fieldValue}>{user.role || "Non communiqué"}</Text>
+        </View>
+
+        {/* Bouton « Modifier mes informations » */}
         <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-          activeOpacity={0.8}
+          style={[
+            commonStyles.buttonSecondary,
+            {
+              marginTop: 32,
+              backgroundColor: colors.white,
+              borderColor: colors.brownDark,
+              borderWidth: 1,
+            },
+          ]}
+          onPress={startEditing}
         >
-          <Text style={styles.logoutButtonText}>Déconnexion</Text>
+          <Text
+            style={[
+              commonStyles.buttonTextPrimary,
+              { color: colors.brownDark },
+            ]}
+          >
+            Modifier mes informations
+          </Text>
         </TouchableOpacity>
+
+        {/* Bouton « Déconnexion » */}
+        <TouchableOpacity
+          style={[commonStyles.buttonPrimary, { marginTop: 12 }]}
+          onPress={logout}
+        >
+          <Text style={commonStyles.buttonTextPrimary}>Déconnexion</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    );
+  }
+
+  // --- AFFICHAGE mode « ÉDITION » ---
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.headerEdit}>
+        Modifiez vos informations{" "}
+        <Text style={{ color: colors.olive }}>– {user.role}</Text>
+      </Text>
+
+      <Text style={styles.labelInput}>Prénom *</Text>
+      <TextInput
+        value={prenom}
+        onChangeText={setPrenom}
+        placeholder="Votre prénom"
+        style={styles.input}
+      />
+
+      <Text style={styles.labelInput}>Nom *</Text>
+      <TextInput
+        value={nom}
+        onChangeText={setNom}
+        placeholder="Votre nom"
+        style={styles.input}
+      />
+
+      <Text style={styles.labelInput}>E-mail *</Text>
+      <TextInput
+        value={email}
+        onChangeText={setEmail}
+        placeholder="exemple@domaine.com"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        style={styles.input}
+      />
+
+      <Text style={styles.labelInput}>Téléphone</Text>
+      <TextInput
+        value={telephone}
+        onChangeText={setTelephone}
+        placeholder="06XXXXXXXX"
+        keyboardType="phone-pad"
+        style={styles.input}
+      />
+
+      <Text style={styles.labelInput}>Adresse</Text>
+      <TextInput
+        value={adresse}
+        onChangeText={setAdresse}
+        placeholder="Votre adresse"
+        style={styles.input}
+      />
+
+      <Text style={styles.labelInput}>Code postal</Text>
+      <TextInput
+        value={codePostal}
+        onChangeText={setCodePostal}
+        placeholder="75000"
+        keyboardType="numeric"
+        style={styles.input}
+      />
+
+      <Text style={styles.labelInput}>Ville</Text>
+      <TextInput
+        value={ville}
+        onChangeText={setVille}
+        placeholder="Paris"
+        style={styles.input}
+      />
+
+      <Text style={styles.labelInput}>Date de naissance</Text>
+      <TextInput
+        value={dateNaissance}
+        onChangeText={setDateNaissance}
+        placeholder="YYYY-MM-DD"
+        style={styles.input}
+      />
+
+      <Text style={styles.labelInput}>Sexe</Text>
+      <View style={styles.sexeButtonsContainer}>
+        {(["Homme", "Femme", "Ne préfère pas dire"] as const).map((opt) => (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => setSexe(opt)}
+            style={[
+              styles.sexeButton,
+              sexe === opt && styles.sexeButtonSelected,
+            ]}
+          >
+            <Text
+              style={[
+                typography.bodyRegular,
+                sexe === opt
+                  ? { color: colors.white }
+                  : { color: colors.brownDark },
+              ]}
+            >
+              {opt}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
+
+      <TouchableOpacity
+        style={[commonStyles.buttonPrimary, { marginTop: 16 }]}
+        onPress={handleSave}
+      >
+        <Text style={commonStyles.buttonTextPrimary}>Enregistrer</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          commonStyles.buttonSecondary,
+          {
+            marginTop: 12,
+            backgroundColor: colors.white,
+            borderColor: colors.brownDark,
+            borderWidth: 1,
+          },
+        ]}
+        onPress={cancelEditing}
+      >
+        <Text style={[commonStyles.buttonTextPrimary, { color: colors.brownDark }]}>
+          Annuler
+        </Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
+  container: {
+    flex: 1,
     backgroundColor: colors.creamLight,
-    padding: 16,
-    paddingBottom: 80,
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
-  profileContainer: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 4,
-    elevation: 2,
+  avatarContainer: {
+    alignItems: "center",
+    marginBottom: 16,
   },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 8,
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#EEE",
   },
-  label: {
-    ...typography.bodyRegular,
-    color: colors.gray500,
-  },
-  value: {
-    ...typography.bodyRegular,
+  greeting: {
+    ...typography.h2,
+    textAlign: "center",
+    marginBottom: 32,
     color: colors.brownDark,
   },
-  logoutButton: {
-    marginTop: 32,
-    backgroundColor: colors.red600,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
+  greetingName: {
+    fontWeight: "700",
   },
-  logoutButtonText: {
-    ...typography.buttonText,
-    color: colors.white,
+  fieldContainer: {
+    marginBottom: 20,
+  },
+  fieldLabel: {
+    ...typography.bodyRegular,
+    color: colors.gray500,
+    marginBottom: 4,
+  },
+  fieldValue: {
+    ...typography.bodyMedium,
+    color: colors.brownDark,
+  },
+  // Styles pour le mode édition
+  headerEdit: {
+    ...typography.h2,
+    color: colors.brownDark,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  labelInput: {
+    ...typography.bodyMedium,
+    color: colors.brownDark,
+    marginBottom: 4,
+  },
+  input: {
+    ...commonStyles.input,
+  },
+  sexeButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  sexeButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.gray500,
+    borderRadius: 6,
+    paddingVertical: 8,
+    alignItems: "center",
+    marginHorizontal: 4,
+    backgroundColor: colors.white,
+  },
+  sexeButtonSelected: {
+    backgroundColor: colors.olive,
+    borderColor: colors.olive,
   },
 });

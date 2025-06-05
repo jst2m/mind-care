@@ -1,13 +1,19 @@
 // src/screens/LoginScreen.tsx
 
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
-import tw from "twrnc";
-
-import { API_HOST } from "../utils/config";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
+import { API_HOST } from "../utils/config";
+import { typography, colors, commonStyles } from "../styles/theme";
 
 export type RootStackParamList = {
   Login: undefined;
@@ -27,7 +33,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState<string>("");
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!email.trim() || !password.trim()) {
       Alert.alert("Erreur", "Veuillez remplir tous les champs.");
       return;
     }
@@ -36,12 +42,15 @@ export default function LoginScreen() {
       const response = await fetch(`${API_HOST}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, motDePasse: password }),
+        body: JSON.stringify({ email: email.trim(), motDePasse: password }),
       });
       const data = await response.json();
 
       if (!response.ok) {
-        Alert.alert("Connexion impossible", data.message || "Identifiants invalides");
+        Alert.alert(
+          "Connexion impossible",
+          data?.message || "Identifiants invalides"
+        );
         return;
       }
 
@@ -50,9 +59,10 @@ export default function LoginScreen() {
         Alert.alert("Erreur", "Aucun token renvoyé par le serveur.");
         return;
       }
-      await login(accessToken);
 
-    
+      await login(accessToken);
+      // Vous pouvez naviguer vers l'écran principal après le login si besoin
+      // par exemple : navigation.replace("Home");
     } catch (error) {
       console.error("Erreur au login :", error);
       Alert.alert("Erreur", "Impossible de se connecter. Veuillez réessayer.");
@@ -60,42 +70,80 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={tw`flex-1 justify-center px-6 bg-gray-50`}>
-      <Text style={tw`text-3xl text-center font-bold mb-6`}>Connexion</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Connexion</Text>
 
-      <Text style={tw`text-sm text-gray-600 mb-1`}>Email</Text>
+      <Text style={styles.label}>Email</Text>
       <TextInput
         value={email}
         onChangeText={setEmail}
         placeholder="exemple@domaine.com"
         keyboardType="email-address"
         autoCapitalize="none"
-        style={tw`w-full border border-gray-300 rounded-lg p-2 mb-4`}
+        style={styles.input}
       />
 
-      <Text style={tw`text-sm text-gray-600 mb-1`}>Mot de passe</Text>
+      <Text style={[styles.label, { marginTop: 16 }]}>Mot de passe</Text>
       <TextInput
         value={password}
         onChangeText={setPassword}
         placeholder="••••••••"
         secureTextEntry
-        style={tw`w-full border border-gray-300 rounded-lg p-2 mb-6`}
+        style={styles.input}
       />
 
       <TouchableOpacity
         onPress={handleLogin}
-        style={tw`w-full bg-green-700 rounded-full py-3 items-center`}
+        style={[commonStyles.buttonPrimary, { marginTop: 24 }]}
         activeOpacity={0.8}
       >
-        <Text style={tw`text-white font-semibold`}>Se connecter</Text>
+        <Text style={commonStyles.buttonTextPrimary}>Se connecter</Text>
       </TouchableOpacity>
 
-      <View style={tw`mt-4 flex-row justify-center`}>
-        <Text style={tw`text-gray-600`}>Pas encore de compte ? </Text>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Pas encore de compte ? </Text>
         <TouchableOpacity onPress={() => navigation.replace("Signup")}>
-          <Text style={tw`text-green-700 font-semibold`}>S'inscrire</Text>
+          <Text style={styles.footerLink}>S'inscrire</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.creamLight,
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  title: {
+    ...typography.h2,
+    textAlign: "center",
+    marginBottom: 32,
+    color: colors.brownDark,
+  },
+  label: {
+    ...typography.bodyMedium,
+    color: colors.brownDark,
+    marginBottom: 8,
+  },
+  input: {
+    ...commonStyles.input,
+    backgroundColor: colors.white,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+  },
+  footerText: {
+    ...typography.bodyRegular,
+    color: colors.gray500,
+  },
+  footerLink: {
+    ...typography.bodyRegular,
+    color: colors.olive,
+    fontWeight: "600",
+  },
+});
