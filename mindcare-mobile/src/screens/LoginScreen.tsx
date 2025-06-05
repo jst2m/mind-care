@@ -1,10 +1,10 @@
+// src/screens/LoginScreen.tsx
+
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import tw from "twrnc";
 
-// Importez API_HOST depuis config.ts
 import { API_HOST } from "../utils/config";
-
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
@@ -12,7 +12,6 @@ import { useAuth } from "../contexts/AuthContext";
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
-  Home: undefined;
 };
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<
@@ -39,10 +38,7 @@ export default function LoginScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, motDePasse: password }),
       });
-
-      console.log("Status HTTP login :", response.status);
       const data = await response.json();
-      console.log("Body login :", data);
 
       if (!response.ok) {
         Alert.alert("Connexion impossible", data.message || "Identifiants invalides");
@@ -56,7 +52,7 @@ export default function LoginScreen() {
       }
       await login(accessToken);
 
-      navigation.replace("Home");
+    
     } catch (error) {
       console.error("Erreur au login :", error);
       Alert.alert("Erreur", "Impossible de se connecter. Veuillez réessayer.");
