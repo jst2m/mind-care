@@ -1,4 +1,5 @@
-// mindcare-mobile/src/screens/AppointmentsScreen.tsx
+// src/screens/AppointmentsScreen.tsx
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -10,7 +11,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { apiFetch } from "../utils/api";
 
-import { colors, typography, commonStyles, fonts } from "../styles/theme";
+import { colors, typography, commonStyles } from "../styles/theme";
 
 type RendezVous = {
   id: number;
@@ -19,6 +20,7 @@ type RendezVous = {
   dateProgrammee: string;
   statut: "scheduled" | "done" | "cancelled";
   motif?: string;
+  proName?: string;
 };
 
 export default function AppointmentsScreen() {
@@ -42,8 +44,32 @@ export default function AppointmentsScreen() {
       setLoading(true);
       setError(null);
 
-      const data = await apiFetch<RendezVous[]>("/rendez-vous/me");
-      setAppointments(data);
+      const rdvList = await apiFetch<RendezVous[]>("/rendez-vous/me");
+
+      const enriched = await Promise.all(
+        rdvList.map(async (rdv) => {
+          try {
+            const proData = await apiFetch<{
+              uuid: string;
+              utilisateur: { prenom: string; nom: string };
+            }>(`/professionnels/${rdv.professionnelUuid}`);
+
+            const prenom = proData.utilisateur.prenom;
+            const nom = proData.utilisateur.nom;
+            return {
+              ...rdv,
+              proName: `${prenom} ${nom}`,
+            } as RendezVous;
+          } catch {
+            return {
+              ...rdv,
+              proName: "Professionnel introuvable",
+            } as RendezVous;
+          }
+        })
+      );
+
+      setAppointments(enriched);
     } catch (e: any) {
       console.error("FetchAppointments Erreur détaillée →", e);
       if (e.message.includes("404")) {
@@ -99,11 +125,17 @@ export default function AppointmentsScreen() {
       <Text style={[typography.bodyMedium, { color: colors.green700 }]}>
         {formatDateTime(item.dateProgrammee)}
       </Text>
+
+      <Text style={[typography.bodyRegular, { color: colors.brownDark, marginTop: 4 }]}>
+        Planifié avec : {item.proName}
+      </Text>
+
       {item.motif ? (
         <Text style={[typography.bodyRegular, { color: colors.gray500, marginTop: 4 }]}>
           Motif : {item.motif}
         </Text>
       ) : null}
+
       <Text style={[typography.bodyRegular, { color: colors.gray500, marginTop: 4 }]}>
         Statut :{" "}
         {item.statut === "scheduled"

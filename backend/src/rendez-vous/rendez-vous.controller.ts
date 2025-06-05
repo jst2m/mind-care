@@ -1,28 +1,69 @@
+// src/rendez-vous/rendez-vous.controller.ts
+
 import {
-  Controller, Get, Post, Put, Delete,
-  Param, Body, UseGuards
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Request,
+  UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
-import { JwtAuthGuard }         from '../auth/jwt-auth.guard';
-import { RendezVousService }    from './rendez-vous.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RendezVousService } from './rendez-vous.service';
+import { RendezVous } from './rendez-vous.entity';
 
 @Controller('rendez-vous')
 @UseGuards(JwtAuthGuard)
 export class RendezVousController {
-  constructor(private svc: RendezVousService) {}
+  constructor(private readonly svc: RendezVousService) {}
 
-  @Get() findAll() { return this.svc.findAll(); }
 
-  @Get(':id') findOne(@Param('id') id: number) {
-    return this.svc.findOne(id);
+  @Get('pro/:proUuid')
+  async getByProfessionnel(
+    @Param('proUuid') proUuid: string,
+  ): Promise<RendezVous[]> {
+    return this.svc.findByProfessionnel(proUuid);
   }
 
-  @Post() create(@Body() body) { return this.svc.create(body); }
 
-  @Put(':id') update(@Param('id') id: number, @Body() body) {
-    return this.svc.update(id, body);
+  @Get('me')
+  async getByPatient(@Request() req): Promise<RendezVous[]> {
+    const patientUuid = req.user.uuid;
+    return this.svc.findByPatient(patientUuid);
   }
 
-  @Delete(':id') remove(@Param('id') id: number) {
-    return this.svc.remove(id);
+
+  @Post()
+  async create(
+    @Request() req,
+    @Body()
+    body: {
+      professionnelUuid: string;
+      dateProgrammee: string; 
+      motif?: string;
+    },
+  ): Promise<RendezVous> {
+    const patientUuid = req.user.uuid;
+    const { professionnelUuid, dateProgrammee, motif } = body;
+
+    if (!professionnelUuid || !dateProgrammee) {
+      throw new BadRequestException(
+        'Il faut fournir professionnelUuid et dateProgrammee',
+      );
+    }
+
+    const date = new Date(dateProgrammee);
+    if (isNaN(date.getTime())) {
+      throw new BadRequestException('dateProgrammee invalide');
+    }
+
+    return this.svc.createRendezVous(
+      patientUuid,
+      professionnelUuid,
+      date,
+      motif ?? null,
+    );
   }
 }

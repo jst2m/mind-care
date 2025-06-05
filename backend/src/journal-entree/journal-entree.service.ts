@@ -10,7 +10,6 @@ export class JournalEntreeService {
     private repo: Repository<JournalEntree>
   ) {}
 
-  // Trouver toutes les entrées du patient
   findAllForPatient(patientUuid: string) {
     const where: FindOptionsWhere<JournalEntree> = { patientUuid };
     return this.repo.find({ where, order: { dateJournal: "DESC" } });

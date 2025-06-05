@@ -12,6 +12,7 @@ import {
 } from "typeorm";
 import { Utilisateur } from "../utilisateur/utilisateur.entity";
 import { JournalEntree } from "../journal-entree/journal-entree.entity";
+import { RendezVous } from "../rendez-vous/rendez-vous.entity"; 
 
 @Entity("patient")
 export class Patient {
@@ -38,7 +39,10 @@ export class Patient {
   @JoinColumn({ name: "uuid" })
   utilisateur: Utilisateur;
 
-  // Relation OneToMany vers JournalEntree
   @OneToMany(() => JournalEntree, (je) => je.patient)
   journalEntrees: JournalEntree[];
+
+
+  @OneToMany(() => RendezVous, (rv) => rv.patient)
+  rendezVous: RendezVous[];
 }

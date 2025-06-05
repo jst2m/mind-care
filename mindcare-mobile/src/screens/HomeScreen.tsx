@@ -1,141 +1,128 @@
+// src/screens/HomeScreen.tsx
+
 import React from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   ScrollView,
   ImageBackground,
+  Image,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "../contexts/AuthContext";
 import { commonStyles, typography, colors } from "../styles/theme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
+  const { isAuthenticated, logout } = useAuth();
+
+  const goToAuth = (screen: "Login" | "Signup") => {
+    if (isAuthenticated) {
+      logout();
+    } else {
+      navigation.navigate(screen);
+    }
+  };
+
+  const goToSearchPros = () => {
+    if (isAuthenticated) {
+      navigation.navigate("SearchPros");
+    } else {
+      goToAuth("Login");
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Image hero */}
-        <ImageBackground
-          source={require("../../assets/hero.jpg")}
-          style={styles.heroImage}
-          imageStyle={styles.heroOverlay}
-        >
-          <View style={styles.heroCaptionContainer}>
-            <Text style={styles.heroTitle}>Bienvenue sur mindCare</Text>
-          </View>
-        </ImageBackground>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ImageBackground
+        source={require("../../assets/hero.jpg")}
+        style={styles.heroImage}
+        imageStyle={styles.heroOverlay}
+      >
+        <View style={styles.heroCaptionContainer}>
+          <Text style={styles.heroTitle}>Bienvenue sur mindCare</Text>
+        </View>
+      </ImageBackground>
 
-        <View style={styles.mainContent}>
-          {/* Section de présentation */}
-          <View style={styles.introSection}>
-            <Text style={styles.introTitle}>
-              Prenez soin de votre santé mentale
-            </Text>
-            <Text style={styles.introParagraph}>
-              Sur mindCare, explorez des exercices de relaxation, tenez votre
-              journal émotionnel et suivez votre bien‐être au quotidien.
-            </Text>
-          </View>
-
-          <View style={styles.tilesContainer}>
-            {/* Bouton Exercices */}
+      <View style={styles.mainContent}>
+        <View style={styles.introSection}>
+          <Text style={styles.introTitle}>Rejoignez la communauté mindCare</Text>
+          <Text style={styles.introParagraph}>
+            Prenez soin de votre santé mentale aux côtés de milliers de membres.
+          </Text>
+          <View style={styles.ctaButtons}>
             <TouchableOpacity
-              style={[commonStyles.card, styles.tileCard]}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate("Exercises")}
+              style={commonStyles.buttonPrimary}
+              onPress={() => goToAuth("Login")}
             >
-              <Text style={[typography.h2, styles.tileTitle]}>Exercices</Text>
-              <Text style={styles.tileSubtitle}>
-                Détendez‐vous avec nos exercices guidés de méditation,
-                respiration et relaxation.
+              <Text style={commonStyles.buttonTextPrimary}>
+                {isAuthenticated ? "Déconnexion" : "Connexion"}
               </Text>
-              <View style={styles.tileButtonContainer}>
-                <View style={commonStyles.buttonPrimary}>
-                  <Text style={commonStyles.buttonTextPrimary}>Découvrir</Text>
-                </View>
-              </View>
             </TouchableOpacity>
-
-            {/* Bouton Journal */}
             <TouchableOpacity
-              style={[commonStyles.card, styles.tileCard]}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate("Journal")}
+              style={[commonStyles.buttonSecondary, { marginLeft: 12 }]}
+              onPress={() => goToAuth("Signup")}
             >
-              <Text style={[typography.h2, styles.tileTitle]}>
-                Journal de bord
+              <Text style={commonStyles.buttonTextPrimary}>
+                {isAuthenticated ? "Profil" : "Inscription"}
               </Text>
-              <Text style={styles.tileSubtitle}>
-                Tenez un journal émotionnel pour suivre votre humeur et vos
-                pensées.
-              </Text>
-              <View style={styles.tileButtonContainer}>
-                <View style={commonStyles.buttonPrimary}>
-                  <Text style={commonStyles.buttonTextPrimary}>Écrire</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Bouton Trouver un psy */}
-            <TouchableOpacity
-              style={[commonStyles.card, styles.tileCard]}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate("SearchPros")}
-            >
-              <Text style={[typography.h2, styles.tileTitle]}>
-                Trouver un psy
-              </Text>
-              <Text style={styles.tileSubtitle}>
-                Parcourez notre annuaire de professionnels pour prendre
-                contact.
-              </Text>
-              <View style={styles.tileButtonContainer}>
-                <View style={commonStyles.buttonPrimary}>
-                  <Text style={commonStyles.buttonTextPrimary}>Rechercher</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Bouton Mes rendez‐vous */}
-            <TouchableOpacity
-              style={[commonStyles.card, styles.tileCard]}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate("Appointments")}
-            >
-              <Text style={[typography.h2, styles.tileTitle]}>
-                Mes rendez‐vous
-              </Text>
-              <Text style={styles.tileSubtitle}>
-                Consultez vos prochains rendez‐vous et suivez leur statut.
-              </Text>
-              <View style={styles.tileButtonContainer}>
-                <View style={commonStyles.buttonPrimary}>
-                  <Text style={commonStyles.buttonTextPrimary}>Voir</Text>
-                </View>
-              </View>
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        <View style={styles.findProsContainer}>
+          <Text style={styles.findProsIntro}>
+            Trouvez un spécialiste dès maintenant
+          </Text>
+          <TouchableOpacity
+            style={commonStyles.buttonPrimary}
+            onPress={goToSearchPros}
+          >
+            <Text style={commonStyles.buttonTextPrimary}>
+              Trouver un psy
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.imageContainer}>
+          <Image
+            source={require("../../assets/happy.png")}
+            style={styles.happyImage}
+            resizeMode="contain"
+          />
+        </View>
+
+        <View style={styles.presentationSection}>
+          <Text style={styles.presentationTitle}>Pourquoi mindCare ?</Text>
+          <Text style={styles.presentationParagraph}>
+            Sur mindCare, explorez des exercices de relaxation, tenez votre
+            journal émotionnel et suivez votre bien-être au quotidien.
+          </Text>
+          <Text style={styles.presentationParagraph}>
+            Nous avons des spécialistes dans plusieurs domaines : TCA, idées
+            suicidaires, anxiété, dépression, stress post-traumatique, et bien
+            d’autres.
+          </Text>
+          <Text style={styles.presentationParagraph}>
+            Trouvez un professionnel qui saura vous aider au mieux, grâce à
+            notre annuaire sécurisé.
+          </Text>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.creamLight,
-  },
   scrollContainer: {
     flexGrow: 1,
     backgroundColor: colors.creamLight,
-    paddingBottom: 48, // marge pour laisser la place au Tab Bar + home indicator
+    paddingBottom: 48,
   },
   heroImage: {
     width: SCREEN_WIDTH,
@@ -161,7 +148,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   introSection: {
-    marginBottom: 24,
+    marginBottom: 16,
     alignItems: "center",
   },
   introTitle: {
@@ -173,22 +160,43 @@ const styles = StyleSheet.create({
     ...typography.bodyRegular,
     textAlign: "center",
     color: colors.gray500,
-  },
-  tilesContainer: {
-    // Vous pouvez adapter flexDirection pour 2 colonnes si besoin
-  },
-  tileCard: {
     marginBottom: 16,
   },
-  tileTitle: {
-    marginBottom: 4,
+  ctaButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 16,
   },
-  tileSubtitle: {
+  findProsContainer: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  findProsIntro: {
+    ...typography.bodyMedium,
+    textAlign: "center",
+    color: colors.brownDark,
+    marginBottom: 8,
+  },
+  imageContainer: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  happyImage: {
+    width: SCREEN_WIDTH * 0.8,
+    height: SCREEN_WIDTH * 0.5,
+  },
+  presentationSection: {
+    marginBottom: 32,
+  },
+  presentationTitle: {
+    ...typography.h2,
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  presentationParagraph: {
     ...typography.bodyRegular,
     color: colors.gray500,
     marginBottom: 12,
-  },
-  tileButtonContainer: {
-    alignItems: "flex-start",
+    textAlign: "center",
   },
 });

@@ -1,4 +1,5 @@
-// mindcare-mobile/App.tsx
+// App.tsx
+
 import React, { useEffect, useRef, useState } from "react";
 import {
   Platform,
@@ -12,41 +13,36 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import {
   NavigationContainer,
-  DrawerActions,
   useNavigation,
 } from "@react-navigation/native";
-import {
-  createDrawerNavigator,
-  DrawerContentScrollView,
-  DrawerItemList,
-  DrawerItem,
-} from "@react-navigation/drawer";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 
+import HomeScreen from "./src/screens/HomeScreen";
 import LoginScreen from "./src/screens/LoginScreen";
 import SignupScreen from "./src/screens/SignupScreen";
-import HomeScreen from "./src/screens/HomeScreen";
+
 import SearchProsScreen from "./src/screens/SearchProsScreen";
+import ProProfileScreen from "./src/screens/ProProfileScreen";
+import ConversationsScreen from "./src/screens/ConversationsScreen";
+import ChatScreen from "./src/screens/ChatScreen";
+
 import AppointmentsScreen from "./src/screens/AppointmentsScreen";
 import JournalScreen from "./src/screens/JournalScreen";
+
 import ExercisesScreen from "./src/screens/ExercisesScreen";
 import ExerciseDetailScreen from "./src/screens/ExerciseDetailScreen";
 import ExerciseFinishedScreen from "./src/screens/ExerciseFinishedScreen";
-import ProfileScreen from "./src/screens/ProfileScreen";
 
-// Nouveaux imports :
-import ChatScreen from "./src/screens/ChatScreen";
-import ProProfileScreen from "./src/screens/ProProfileScreen";
-import ConversationsScreen from "./src/screens/ConversationsScreen";
+import ProfileScreen from "./src/screens/ProfileScreen";
 
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { apiFetch } from "./src/utils/api";
 
 import { colors, typography, commonStyles } from "./src/styles/theme";
 
-// --- Configuration du handler de notifications push (inchangé) ---
+// === Configuration des notifications ===
 Notifications.setNotificationHandler({
   handleNotification: async (): Promise<Notifications.NotificationBehavior> => ({
     shouldShowAlert: true,
@@ -57,73 +53,297 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// --- Création des navigateurs ---
-const RootStack = createNativeStackNavigator<{}>();
-const Drawer = createDrawerNavigator<{}>();
-const Tab = createBottomTabNavigator<{}>();
+// === Public Stack (Home, Login, Signup) ===
+
+const PublicStack = createNativeStackNavigator<{}>();
+
+function PublicStackNavigator() {
+  return (
+    <PublicStack.Navigator screenOptions={{ headerShown: false }}>
+      <PublicStack.Screen name="HomePublic" component={HomeScreen} />
+      <PublicStack.Screen name="Login" component={LoginScreen} />
+      <PublicStack.Screen name="Signup" component={SignupScreen} />
+    </PublicStack.Navigator>
+  );
+}
+
+// === 1) Authenticated: RendezVous Stack ===
+
+const RendezVousStack = createNativeStackNavigator<{}>();
+
+function RendezVousStackNavigator() {
+  return (
+    <RendezVousStack.Navigator>
+      <RendezVousStack.Screen
+        name="Appointments"
+        component={AppointmentsScreen}
+        options={{
+          title: "Mes rendez-vous",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
+      />
+    </RendezVousStack.Navigator>
+  );
+}
+
+// === 2) Authenticated: Journal Stack ===
+
+const JournalStack = createNativeStackNavigator<{}>();
+
+function JournalStackNavigator() {
+  return (
+    <JournalStack.Navigator>
+      <JournalStack.Screen
+        name="JournalHome"
+        component={JournalScreen}
+        options={{
+          title: "Journal Émotionnel",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
+      />
+    </JournalStack.Navigator>
+  );
+}
+
+// === 3) Authenticated: Home Stack (avec SearchPros, ProProfile, Conversations, Chat) ===
+
+const HomeStack = createNativeStackNavigator<{}>();
+
+function HomeStackNavigator() {
+  const navigation = useNavigation<any>();
+
+  return (
+    <HomeStack.Navigator>
+      <HomeStack.Screen
+        name="HomeMainAuth"
+        component={HomeScreen}
+        options={{
+          title: "Accueil",
+          headerTitleAlign: "center",
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Conversations")}
+              style={{ marginRight: 14 }}
+            >
+              <Feather name="message-circle" size={24} color={colors.olive} />
+            </TouchableOpacity>
+          ),
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
+      />
+
+      <HomeStack.Screen
+        name="SearchPros"
+        component={SearchProsScreen}
+        options={{
+          title: "Trouver un psy",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
+      />
+
+      <HomeStack.Screen
+        name="ProProfile"
+        component={ProProfileScreen}
+        options={{
+          title: "Profil Pro",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
+      />
+
+      <HomeStack.Screen
+        name="Conversations"
+        component={ConversationsScreen}
+        options={{
+          title: "Mes discussions",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
+      />
+
+      <HomeStack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{
+          title: "Chat",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
+      />
+    </HomeStack.Navigator>
+  );
+}
+
+// === 4) Authenticated: Exercises Stack ===
+
 const ExercisesStack = createNativeStackNavigator<{}>();
 
-// --- Stack interne pour la section “Exercices” (liste → détail → fini) ---
 function ExercisesStackNavigator() {
   return (
-    <ExercisesStack.Navigator screenOptions={{ headerShown: false }}>
+    <ExercisesStack.Navigator>
       <ExercisesStack.Screen
         name="ExercisesList"
         component={ExercisesScreen}
-        options={{ title: "Exercices" }}
+        options={{
+          title: "Exercices",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
       />
       <ExercisesStack.Screen
         name="ExerciseDetail"
         component={ExerciseDetailScreen}
-        options={{ title: "Détail de l’exo" }}
+        options={{
+          title: "Détail exo",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
       />
       <ExercisesStack.Screen
         name="ExerciseFinished"
         component={ExerciseFinishedScreen}
-        options={{ title: "Terminé" }}
+        options={{
+          title: "Terminé",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
       />
     </ExercisesStack.Navigator>
   );
 }
 
-// --- Bottom Tab Navigator (écrans principaux) ---
-function PatientTabNavigator() {
-  const navigation = useNavigation();
+// === 5) Authenticated: Profile Stack ===
 
+const ProfileStack = createNativeStackNavigator<{}>();
+
+function ProfileStackNavigator() {
+  return (
+    <ProfileStack.Navigator>
+      <ProfileStack.Screen
+        name="ProfileHome"
+        component={ProfileScreen}
+        options={{
+          title: "Profil",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: colors.white,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            ...typography.h2,
+            color: colors.brownDark,
+          },
+        }}
+      />
+    </ProfileStack.Navigator>
+  );
+}
+
+// === 6) Bottom Tab Navigator (pour utilisateur authentifié) ===
+
+const Tab = createBottomTabNavigator<{}>();
+
+function PatientTabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerTitleAlign: "center",
-        headerLeft: () => (
-          <TouchableOpacity
-            onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-            style={{ marginLeft: 14 }}
-          >
-            <Feather name="menu" size={24} color={colors.brownDark} />
-          </TouchableOpacity>
-        ),
-        headerStyle: {
-          backgroundColor: colors.white,
-          shadowOpacity: 0,
-          elevation: 0,
-        },
-        headerTitleStyle: {
-          ...typography.h2,
-          color: colors.brownDark,
-        },
+        headerShown: false,
         tabBarIcon: ({ color, size }) => {
+          if (route.name === "HomeTab") {
+            return <Feather name="home" size={size + 6} color={color} />;
+          }
           switch (route.name) {
-            case "Home":
-              return <Feather name="home" size={size} color={color} />;
-            case "Conversations":
-              return <Feather name="message-circle" size={size} color={color} />;
-            case "Appointments":
+            case "RendezVousTab":
               return <Feather name="calendar" size={size} color={color} />;
-            case "Journal":
+            case "JournalTab":
               return <Feather name="book-open" size={size} color={color} />;
-            case "Exercises":
+            case "ExercisesTab":
               return <Feather name="edit-2" size={size} color={color} />;
-            case "Profile":
+            case "ProfileTab":
               return <Feather name="user" size={size} color={color} />;
             default:
               return null;
@@ -134,132 +354,45 @@ function PatientTabNavigator() {
         tabBarStyle: {
           backgroundColor: colors.cream,
           borderTopColor: colors.gray200,
+          height: 60,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          marginBottom: 4,
         },
       })}
     >
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ title: "Accueil" }}
-      />
-      <Tab.Screen
-        name="Conversations"
-        component={ConversationsScreen}
-        options={{ title: "Mes discussions" }}
-      />
-      <Tab.Screen
-        name="Appointments"
-        component={AppointmentsScreen}
+        name="RendezVousTab"
+        component={RendezVousStackNavigator}
         options={{ title: "Rendez-vous" }}
       />
       <Tab.Screen
-        name="Journal"
-        component={JournalScreen}
+        name="JournalTab"
+        component={JournalStackNavigator}
         options={{ title: "Journal" }}
       />
       <Tab.Screen
-        name="Exercises"
+        name="HomeTab"
+        component={HomeStackNavigator}
+        options={{ title: "Accueil" }}
+      />
+      <Tab.Screen
+        name="ExercisesTab"
         component={ExercisesStackNavigator}
         options={{ title: "Exercices" }}
       />
       <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
+        name="ProfileTab"
+        component={ProfileStackNavigator}
         options={{ title: "Profil" }}
       />
     </Tab.Navigator>
   );
 }
 
-// --- Contenu custom du Drawer (avec "Déconnexion") ---
-function PatientDrawerContent(props: any) {
-  const { logout } = useAuth();
+// === 7) Composant principal App + InnerApp pour l’authentification & notifications ===
 
-  const handleLogout = () => {
-    Alert.alert(
-      "Déconnexion",
-      "Voulez-vous vraiment vous déconnecter ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "OK",
-          onPress: async () => {
-            await logout();
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  return (
-    <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
-      <DrawerItemList {...props} />
-      <DrawerItem
-        label="Déconnexion"
-        labelStyle={styles.drawerLogoutLabel}
-        onPress={handleLogout}
-      />
-    </DrawerContentScrollView>
-  );
-}
-
-// --- Drawer Navigator (Tabs + SearchPros + ProProfile & Chat + possibilités cachées) ---
-function PatientDrawer() {
-  return (
-    <Drawer.Navigator
-      drawerContent={(props) => <PatientDrawerContent {...props} />}
-      screenOptions={{
-        headerShown: false,
-        drawerType: "slide",
-        drawerStyle: {
-          backgroundColor: colors.creamLight,
-        },
-        drawerLabelStyle: {
-          fontFamily: typography.bodyMedium.fontFamily,
-          fontSize: 16,
-          color: colors.brownDark,
-        },
-      }}
-    >
-      {/* 1) Écran principal : les onglets en bas */}
-      <Drawer.Screen
-        name="Tabs"
-        component={PatientTabNavigator}
-        options={{ title: "Menu principal" }}
-      />
-
-      {/* 2) Trouver un psy (visible dans le menu burger) */}
-      <Drawer.Screen
-        name="SearchPros"
-        component={SearchProsScreen}
-        options={{ title: "Trouver un psy" }}
-      />
-
-      {/* 3) ProProfile (caché du menu burger) */}
-      <Drawer.Screen
-        name="ProProfile"
-        component={ProProfileScreen}
-        options={{
-          drawerItemStyle: { height: 0 },
-          title: "Profil du professionnel",
-        }}
-      />
-
-      {/* 4) ChatScreen (caché du menu burger) */}
-      <Drawer.Screen
-        name="ChatScreen"
-        component={ChatScreen}
-        options={{
-          drawerItemStyle: { height: 0 },
-          title: "Discussion",
-        }}
-      />
-    </Drawer.Navigator>
-  );
-}
-
-// --- Composant principal App (contexte Auth) ---
 export default function App() {
   return (
     <AuthProvider>
@@ -275,7 +408,7 @@ function InnerApp() {
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    // Initialisation des notifications push (inchangé)
+    // Initialisation notifications push
     registerForPushNotificationsAsync()
       .then((token) => {
         if (token) {
@@ -288,33 +421,32 @@ function InnerApp() {
       })
       .catch((err) => console.warn("Erreur permission push :", err));
 
-    notificationListener.current = Notifications.addNotificationReceivedListener(
-      (notification) => {
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener((notification) => {
         Alert.alert(
           notification.request.content.title ?? "",
           notification.request.content.body ?? ""
         );
-      }
-    );
+      });
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         console.log("Notification tap :", response);
       });
 
     return () => {
-      if (notificationListener.current) {
-        notificationListener.current.remove();
-      }
-      if (responseListener.current) {
-        responseListener.current.remove();
-      }
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
     };
   }, []);
 
   if (isLoading) {
-    // Tant que AuthContext vérifie le token local
     return (
-      <View style={[commonStyles.centered, { backgroundColor: colors.white }]}>
+      <View
+        style={[
+          commonStyles.centered,
+          { backgroundColor: colors.white },
+        ]}
+      >
         <ActivityIndicator size="large" color={colors.green700} />
       </View>
     );
@@ -323,27 +455,22 @@ function InnerApp() {
   return (
     <NavigationContainer>
       {!isAuthenticated ? (
-        // Si non authentifié → Stack Login / Signup
-        <RootStack.Navigator screenOptions={{ headerShown: false }}>
-          <RootStack.Screen name="Login" component={LoginScreen} />
-          <RootStack.Screen name="Signup" component={SignupScreen} />
-        </RootStack.Navigator>
+        <PublicStackNavigator />
       ) : (
-        // Si authentifié → Drawer Navigator (Tabs + SearchPros + ProProfile/Chat cachés)
-        <PatientDrawer />
+        <PatientTabNavigator />
       )}
     </NavigationContainer>
   );
 }
 
-/**
- *  Méthode auxiliaire pour obtenir le token Expo Push notifications
- */
+// === 8) Fonction d’enregistrement pour notifications push ===
+
 async function registerForPushNotificationsAsync(): Promise<string | undefined> {
   let token: string | undefined;
 
   if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    const { status: existingStatus } =
+      await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
@@ -378,13 +505,5 @@ async function registerForPushNotificationsAsync(): Promise<string | undefined> 
 }
 
 const styles = StyleSheet.create({
-  drawerContainer: {
-    flex: 1,
-    backgroundColor: colors.creamLight,
-  },
-  drawerLogoutLabel: {
-    color: colors.red600,
-    fontFamily: typography.bodyMedium.fontFamily,
-    fontSize: 16,
-  },
+  // styles globaux si nécessaire
 });

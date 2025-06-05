@@ -9,7 +9,7 @@ import { PatientModule }        from '../patient/patient.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([JournalEntree]),
-    PatientModule,       // <-- on importe le module Patient ici
+    PatientModule,     
   ],
   providers: [JournalEntreeService],
   controllers: [JournalEntreeController],

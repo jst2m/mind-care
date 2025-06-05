@@ -1,397 +1,216 @@
-// mindcare-mobile/src/screens/ProfileScreen.tsx
-import React, { useState, useEffect } from "react";
+// src/screens/ProfileScreen.tsx
+
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
-  Button,
   ActivityIndicator,
-  Alert,
-  ScrollView,
-  Image,
   StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
-import { jwtDecode } from "jwt-decode";
 import { useAuth } from "../contexts/AuthContext";
 import { apiFetch } from "../utils/api";
 
-import { colors, typography, commonStyles, fonts } from "../styles/theme";
+import { colors, typography, commonStyles } from "../styles/theme";
 
-type UserProfile = {
+type UtilisateurProfile = {
   uuid: string;
   email: string;
   prenom: string;
   nom: string;
-  dateNaissance?: string;
-  sexe: "Homme" | "Femme" | "Ne préfère pas dire";
-  role: "patient" | "professionnel";
   telephone?: string;
   adresse?: string;
   codePostal?: string;
   ville?: string;
+  dateNaissance?: string;
+  sexe: string;
+  role: string;
 };
 
 export default function ProfileScreen() {
-  const { accessToken } = useAuth();
+  const { accessToken, logout } = useAuth();
+  const [userData, setUserData] = useState<UtilisateurProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [editing, setEditing] = useState<boolean>(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [form, setForm] = useState<Partial<UserProfile>>({});
-  const [saving, setSaving] = useState<boolean>(false);
-
-  const [userUuid, setUserUuid] = useState<string | null>(null);
-  useEffect(() => {
-    if (!accessToken) return;
-    try {
-      type JwtPayload = { sub: string; role: string; iat: number; exp: number };
-      const payload: JwtPayload = jwtDecode<JwtPayload>(accessToken);
-      setUserUuid(payload.sub);
-    } catch (err) {
-      console.error("Erreur lors du décodage du JWT :", err);
-    }
-  }, [accessToken]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!userUuid) return;
-
-    const fetchProfile = async () => {
-      setLoading(true);
-      try {
-        const data = await apiFetch<UserProfile>(`/utilisateur/${userUuid}`);
-        setProfile(data);
-        setForm({
-          prenom: data.prenom,
-          nom: data.nom,
-          email: data.email,
-          dateNaissance: data.dateNaissance || "",
-          sexe: data.sexe,
-          telephone: data.telephone || "",
-          adresse: data.adresse || "",
-          codePostal: data.codePostal || "",
-          ville: data.ville || "",
-        });
-      } catch (err: any) {
-        console.error("Erreur fetch profil :", err);
-        Alert.alert(
-          "Erreur",
-          "Impossible de récupérer vos informations. Veuillez réessayer."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
-  }, [userUuid]);
+  }, []);
 
-  const toggleEditing = () => {
-    if (editing && profile) {
-      setForm({
-        prenom: profile.prenom,
-        nom: profile.nom,
-        email: profile.email,
-        dateNaissance: profile.dateNaissance || "",
-        sexe: profile.sexe,
-        telephone: profile.telephone || "",
-        adresse: profile.adresse || "",
-        codePostal: profile.codePostal || "",
-        ville: profile.ville || "",
-      });
+  const fetchProfile = async () => {
+    if (!accessToken) {
+      setError("Non authentifié");
+      setLoading(false);
+      return;
     }
-    setEditing(!editing);
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const authTest = await apiFetch<{ user: { sub: string; role: string } }>(
+        "/auth/test"
+      );
+      const userUuid = authTest.user.sub;
+
+      const data = await apiFetch<UtilisateurProfile>(
+        `/utilisateur/${userUuid}`
+      );
+      setUserData(data);
+    } catch (e: any) {
+      console.error("Profile fetch erreur →", e);
+      if (e.message.includes("404")) {
+        setError("Profil introuvable (404).");
+      } else if (e.message.includes("401")) {
+        setError("Token invalide ou non autorisé (401).");
+      } else {
+        setError("Impossible de charger le profil.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const saveChanges = async () => {
-    if (!userUuid) return;
-    setSaving(true);
-    try {
-      const updated: Partial<UserProfile> = {
-        prenom: form.prenom!,
-        nom: form.nom!,
-        email: form.email!,
-        dateNaissance: form.dateNaissance || undefined,
-        sexe: form.sexe!,
-        telephone: form.telephone || undefined,
-        adresse: form.adresse || undefined,
-        codePostal: form.codePostal || undefined,
-        ville: form.ville || undefined,
-      };
-
-      await apiFetch<UserProfile>(`/utilisateur/${userUuid}`, {
-        method: "PUT",
-        body: JSON.stringify(updated),
-      });
-
-      const fresh = await apiFetch<UserProfile>(`/utilisateur/${userUuid}`);
-      setProfile(fresh);
-      setForm({
-        prenom: fresh.prenom,
-        nom: fresh.nom,
-        email: fresh.email,
-        dateNaissance: fresh.dateNaissance || "",
-        sexe: fresh.sexe,
-        telephone: fresh.telephone || "",
-        adresse: fresh.adresse || "",
-        codePostal: fresh.codePostal || "",
-        ville: fresh.ville || "",
-      });
-      setEditing(false);
-      Alert.alert("Succès", "Vos informations ont bien été mises à jour.");
-    } catch (err) {
-      console.error("Erreur mise à jour profil :", err);
-      Alert.alert(
-        "Erreur",
-        "Impossible de mettre à jour vos informations. Veuillez réessayer."
-      );
-    } finally {
-      setSaving(false);
-    }
+  const handleLogout = () => {
+    Alert.alert(
+      "Déconnexion",
+      "Êtes-vous sûr·e de vouloir vous déconnecter ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "OK",
+          onPress: async () => {
+            await logout();
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   if (loading) {
     return (
-      <View style={[commonStyles.centered, { backgroundColor: colors.creamLight }]}>
-        <ActivityIndicator size="large" color={colors.green700} />
+      <View style={commonStyles.centered}>
+        <ActivityIndicator size="large" color={colors.olive} />
       </View>
     );
   }
 
-  if (!profile) {
+  if (error || !userData) {
     return (
-      <View style={[commonStyles.centered, { backgroundColor: colors.creamLight, padding: 24 }]}>
+      <View style={commonStyles.centered}>
         <Text style={[typography.bodyRegular, { color: colors.red600 }]}>
-          Profil introuvable.
+          {error || "Erreur lors du chargement des données."}
         </Text>
       </View>
     );
   }
 
+  const formattedBirthDate = userData.dateNaissance
+    ? new Date(userData.dateNaissance).toLocaleDateString("fr-FR")
+    : "N/A";
+
   return (
-    <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.avatarContainer}>
-        <Image
-          source={require("../../assets/FA4D18D6-B703-413D-B718-6841B3CBA35B.jpg")}
-          style={styles.avatar}
-        />
-      </View>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.profileContainer}>
+        <Text style={[typography.h2, { color: colors.brownDark }]}>
+          Bonjour, {userData.prenom} {userData.nom} !
+        </Text>
 
-      <Text style={styles.greeting}>
-        Bonjour, {profile.prenom} {profile.nom} !
-      </Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Prénom</Text>
+          <Text style={styles.value}>{userData.prenom}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Nom</Text>
+          <Text style={styles.value}>{userData.nom}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>E-mail</Text>
+          <Text style={styles.value}>{userData.email}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Téléphone</Text>
+          <Text style={styles.value}>{userData.telephone || "N/A"}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Adresse</Text>
+          <Text style={styles.value}>{userData.adresse || "N/A"}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Code Postal</Text>
+          <Text style={styles.value}>{userData.codePostal || "N/A"}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Ville</Text>
+          <Text style={styles.value}>{userData.ville || "N/A"}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Date de naissance</Text>
+          <Text style={styles.value}>{formattedBirthDate}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Sexe</Text>
+          <Text style={styles.value}>{userData.sexe}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Rôle</Text>
+          <Text style={styles.value}>{userData.role}</Text>
+        </View>
 
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Prénom</Text>
-        {editing ? (
-          <TextInput
-            style={styles.input}
-            value={form.prenom}
-            onChangeText={(t) => setForm((f) => ({ ...f, prenom: t }))}
-          />
-        ) : (
-          <Text style={styles.fieldValue}>{profile.prenom}</Text>
-        )}
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Nom</Text>
-        {editing ? (
-          <TextInput
-            style={styles.input}
-            value={form.nom}
-            onChangeText={(t) => setForm((f) => ({ ...f, nom: t }))}
-          />
-        ) : (
-          <Text style={styles.fieldValue}>{profile.nom}</Text>
-        )}
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>E-mail</Text>
-        {editing ? (
-          <TextInput
-            style={styles.input}
-            value={form.email}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            onChangeText={(t) => setForm((f) => ({ ...f, email: t }))}
-          />
-        ) : (
-          <Text style={styles.fieldValue}>{profile.email}</Text>
-        )}
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Téléphone</Text>
-        {editing ? (
-          <TextInput
-            style={styles.input}
-            value={form.telephone}
-            keyboardType="phone-pad"
-            onChangeText={(t) => setForm((f) => ({ ...f, telephone: t }))}
-          />
-        ) : (
-          <Text style={styles.fieldValue}>{profile.telephone || "N/A"}</Text>
-        )}
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Adresse</Text>
-        {editing ? (
-          <TextInput
-            style={styles.input}
-            value={form.adresse}
-            onChangeText={(t) => setForm((f) => ({ ...f, adresse: t }))}
-          />
-        ) : (
-          <Text style={styles.fieldValue}>{profile.adresse || "N/A"}</Text>
-        )}
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Code Postal</Text>
-        {editing ? (
-          <TextInput
-            style={styles.input}
-            value={form.codePostal}
-            keyboardType="number-pad"
-            onChangeText={(t) => setForm((f) => ({ ...f, codePostal: t }))}
-          />
-        ) : (
-          <Text style={styles.fieldValue}>{profile.codePostal || "N/A"}</Text>
-        )}
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Ville</Text>
-        {editing ? (
-          <TextInput
-            style={styles.input}
-            value={form.ville}
-            onChangeText={(t) => setForm((f) => ({ ...f, ville: t }))}
-          />
-        ) : (
-          <Text style={styles.fieldValue}>{profile.ville || "N/A"}</Text>
-        )}
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Date de naissance</Text>
-        {editing ? (
-          <TextInput
-            style={styles.input}
-            value={form.dateNaissance}
-            placeholder="YYYY-MM-DD"
-            onChangeText={(t) =>
-              setForm((f) => ({ ...f, dateNaissance: t }))
-            }
-          />
-        ) : (
-          <Text style={styles.fieldValue}>
-            {profile.dateNaissance
-              ? new Date(profile.dateNaissance).toLocaleDateString()
-              : "N/A"}
-          </Text>
-        )}
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Sexe</Text>
-        {editing ? (
-          <TextInput
-            style={styles.input}
-            value={form.sexe}
-            onChangeText={(t) => setForm((f) => ({ ...f, sexe: t as any }))}
-            placeholder="Homme, Femme ou Ne préfère pas dire"
-          />
-        ) : (
-          <Text style={styles.fieldValue}>{profile.sexe}</Text>
-        )}
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <Text style={styles.label}>Rôle</Text>
-        <Text style={styles.fieldValue}>{profile.role}</Text>
-      </View>
-
-      <View style={styles.buttonRow}>
-        {editing ? (
-          <>
-            <View style={styles.flex}>
-              <Button
-                title={saving ? "Enregistrement..." : "Enregistrer"}
-                onPress={saveChanges}
-                disabled={saving}
-                color={colors.olive}
-              />
-            </View>
-            <View style={[styles.flex, { marginLeft: 8 }]}>
-              <Button
-                title="Annuler"
-                onPress={toggleEditing}
-                color={colors.red600}
-                disabled={saving}
-              />
-            </View>
-          </>
-        ) : (
-          <Button
-            title="Modifier mes informations"
-            onPress={toggleEditing}
-            color={colors.olive}
-          />
-        )}
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.logoutButtonText}>Déconnexion</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
+  scrollContainer: {
     flexGrow: 1,
     backgroundColor: colors.creamLight,
-    padding: 24,
-    paddingBottom: 32,
+    padding: 16,
+    paddingBottom: 80,
   },
-  avatarContainer: {
-    alignItems: "center",
-    marginBottom: 16,
+  profileContainer: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 4,
+    elevation: 2,
   },
-  avatar: {
-    width: 96,
-    height: 128,
-    backgroundColor: colors.gray200,
-    borderRadius: 8,
-  },
-  greeting: {
-    ...typography.h2,
-    textAlign: "center",
-    marginBottom: 24,
-  },
-  fieldGroup: {
-    marginBottom: 16,
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 8,
   },
   label: {
     ...typography.bodyRegular,
     color: colors.gray500,
-    marginBottom: 4,
   },
-  input: {
-    ...commonStyles.input,
-  },
-  fieldValue: {
-    fontFamily: fonts.baseSans,
-    fontSize: 16,
+  value: {
+    ...typography.bodyRegular,
     color: colors.brownDark,
   },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 24,
+  logoutButton: {
+    marginTop: 32,
+    backgroundColor: colors.red600,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
   },
-  flex: {
-    flex: 1,
+  logoutButtonText: {
+    ...typography.buttonText,
+    color: colors.white,
   },
 });

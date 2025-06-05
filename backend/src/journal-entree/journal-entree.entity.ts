@@ -30,7 +30,6 @@ export class JournalEntree {
   @Column({ type: "varchar", length: 255, nullable: true, default: "" })
   titre: string;
 
-  // Retirer default: "" pour la colonne TEXT
   @Column({ type: "text", nullable: true })
   contenu: string;
 

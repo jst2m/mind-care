@@ -1,5 +1,8 @@
+// src/screens/ProProfileScreen.tsx
+
 import React, { useEffect, useState } from "react";
 import {
+  SafeAreaView,
   View,
   Text,
   ActivityIndicator,
@@ -37,7 +40,6 @@ type RendezVousPro = {
   motif?: string;
 };
 
-// Définition des params attendus par la route
 type ProProfileRouteProp = RouteProp<
   { ProProfile: { professionnelUuid: string; professionnelName: string } },
   "ProProfile"
@@ -48,13 +50,16 @@ export default function ProProfileScreen() {
   const navigation = useNavigation<any>();
   const { accessToken } = useAuth();
 
+  // Si aucun paramètre n’est passé, on affiche un message d’erreur
   if (!route.params) {
     return (
-      <View style={[commonStyles.centered, { backgroundColor: colors.creamLight }]}>
-        <Text style={[typography.bodyRegular, { color: colors.red600 }]}>
-          Aucun professionnel sélectionné.
-        </Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <Text style={[typography.bodyRegular, { color: colors.red600 }]}>
+            Aucun professionnel sélectionné.
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -71,12 +76,11 @@ export default function ProProfileScreen() {
   const [showPicker, setShowPicker] = useState<boolean>(false);
   const [chosenDate, setChosenDate] = useState<Date>(new Date());
 
-  // Charge les infos du pro au montage
   useEffect(() => {
     navigation.setOptions({ title: professionnelName });
     fetchPro();
     fetchProRdv();
-  }, [professionnelUuid, professionnelName]);
+  }, [professionnelUuid]);
 
   const fetchPro = async () => {
     try {
@@ -114,7 +118,7 @@ export default function ProProfileScreen() {
     }
   };
 
-  const onChangeDate = (_event: any, selectedDate?: Date) => {
+  const onChangeDate = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
     if (selectedDate) {
       setChosenDate(selectedDate);
@@ -155,132 +159,146 @@ export default function ProProfileScreen() {
 
   if (loadingPro) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.olive} />
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.olive} />
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (errorPro || !pro) {
     return (
-      <View style={styles.centered}>
-        <Text style={[typography.bodyRegular, { color: colors.red600 }]}>
-          {errorPro || "Professionnel introuvable."}
-        </Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <Text style={[typography.bodyRegular, { color: colors.red600 }]}>
+            {errorPro || "Professionnel introuvable."}
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.proCard}>
-        <Text style={[typography.h2, { color: colors.olive, marginBottom: 4 }]}>
-          {pro.utilisateur.prenom} {pro.utilisateur.nom}
-        </Text>
-        <Text
-          style={[
-            typography.bodyMedium,
-            { color: colors.gray500, marginBottom: 4 },
-          ]}
-        >
-          {pro.specialite}
-        </Text>
-        {pro.description ? (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.proCard}>
+          <Text style={[typography.h2, { color: colors.olive, marginBottom: 4 }]}>
+            {pro.utilisateur.prenom} {pro.utilisateur.nom}
+          </Text>
           <Text
             style={[
-              typography.bodyRegular,
+              typography.bodyMedium,
               { color: colors.gray500, marginBottom: 4 },
             ]}
           >
-            {pro.description}
+            {pro.specialite}
           </Text>
-        ) : null}
-        {pro.telephonePro ? (
-          <Text
-            style={[
-              typography.bodyRegular,
-              { color: colors.gray500, marginBottom: 4 },
-            ]}
-          >
-            Tél : {pro.telephonePro}
-          </Text>
-        ) : null}
-        {pro.siteWeb ? (
-          <Text
-            style={[
-              typography.bodyRegular,
-              { color: colors.olive, marginBottom: 4 },
-            ]}
-          >
-            {pro.siteWeb}
-          </Text>
-        ) : null}
-      </View>
-
-      <Text style={[typography.h2, { color: colors.olive, marginBottom: 8 }]}>
-        Créneaux existants
-      </Text>
-      {loadingRdv ? (
-        <ActivityIndicator size="small" color={colors.olive} />
-      ) : errorRdv ? (
-        <Text
-          style={[typography.bodyRegular, { color: colors.red600, marginBottom: 16 }]}
-        >
-          {errorRdv}
-        </Text>
-      ) : rdvList.length === 0 ? (
-        <Text style={[typography.bodyRegular, { color: colors.gray500, marginBottom: 16 }]}>
-          Aucun créneau planifié.
-        </Text>
-      ) : (
-        rdvList.map((item) => (
-          <View key={item.id.toString()} style={styles.rdvItem}>
-            <Text style={[typography.bodyRegular, { color: colors.brownDark }]}>
-              {formatDateTime(item.dateProgrammee)}
+          {pro.description ? (
+            <Text
+              style={[
+                typography.bodyRegular,
+                { color: colors.gray500, marginBottom: 4 },
+              ]}
+            >
+              {pro.description}
             </Text>
-            {item.motif ? (
-              <Text style={[typography.bodyRegular, { color: colors.gray500 }]}>
-                Motif : {item.motif}
-              </Text>
-            ) : null}
-          </View>
-        ))
-      )}
-
-      <View style={styles.reserveSection}>
-        <Text style={[typography.h2, { color: colors.olive, marginBottom: 8 }]}>
-          Réserver un créneau
-        </Text>
-        <Button
-          title="Choisir date et heure"
-          onPress={() => setShowPicker(true)}
-          color={colors.olive}
-        />
-        {showPicker && (
-          <DateTimePicker
-            value={chosenDate}
-            mode="datetime"
-            display="default"
-            minuteInterval={15}
-            onChange={onChangeDate}
-          />
-        )}
-        <Text style={[typography.bodyRegular, { color: colors.brownDark, marginTop: 8 }]}>
-          Créneau sélectionné : {formatDateTime(chosenDate.toISOString())}
-        </Text>
-        <View style={{ marginTop: 12 }}>
-          <Button
-            title="Réserver ce créneau"
-            color={colors.olive}
-            onPress={reserveRdv}
-          />
+          ) : null}
+          {pro.telephonePro ? (
+            <Text
+              style={[
+                typography.bodyRegular,
+                { color: colors.gray500, marginBottom: 4 },
+              ]}
+            >
+              Tél : {pro.telephonePro}
+            </Text>
+          ) : null}
+          {pro.siteWeb ? (
+            <Text
+              style={[
+                typography.bodyRegular,
+                { color: colors.olive, marginBottom: 4 },
+              ]}
+            >
+              {pro.siteWeb}
+            </Text>
+          ) : null}
         </View>
-      </View>
-    </ScrollView>
+
+        <Text style={[typography.h2, { color: colors.olive, marginBottom: 8 }]}>
+          Créneaux existants
+        </Text>
+        {loadingRdv ? (
+          <ActivityIndicator size="small" color={colors.olive} />
+        ) : errorRdv ? (
+          <Text
+            style={[typography.bodyRegular, { color: colors.red600, marginBottom: 16 }]}
+          >
+            {errorRdv}
+          </Text>
+        ) : rdvList.length === 0 ? (
+          <Text style={[typography.bodyRegular, { color: colors.gray500, marginBottom: 16 }]}>
+            Aucun créneau planifié.
+          </Text>
+        ) : (
+          rdvList.map((item) => (
+            <View key={item.id.toString()} style={styles.rdvItem}>
+              <Text style={[typography.bodyRegular, { color: colors.brownDark }]}>
+                {formatDateTime(item.dateProgrammee)}
+              </Text>
+              {item.motif ? (
+                <Text
+                  style={[typography.bodyRegular, { color: colors.gray500 }]}
+                >
+                  Motif : {item.motif}
+                </Text>
+              ) : null}
+            </View>
+          ))
+        )}
+
+        <View style={styles.reserveSection}>
+          <Text style={[typography.h2, { color: colors.olive, marginBottom: 8 }]}>
+            Réserver un créneau
+          </Text>
+          <Button
+            title="Choisir date et heure"
+            onPress={() => setShowPicker(true)}
+            color={colors.olive}
+          />
+          {showPicker && (
+            <DateTimePicker
+              value={chosenDate}
+              mode="datetime"
+              display="default"
+              minuteInterval={15}
+              onChange={onChangeDate}
+            />
+          )}
+          <Text
+            style={[typography.bodyRegular, { color: colors.brownDark, marginTop: 8 }]}
+          >
+            Créneau sélectionné : {formatDateTime(chosenDate.toISOString())}
+          </Text>
+          <View style={{ marginTop: 12 }}>
+            <Button
+              title="Réserver ce créneau"
+              color={colors.olive}
+              onPress={reserveRdv}
+            />
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.creamLight,
+  },
   centered: {
     flex: 1,
     alignItems: "center",

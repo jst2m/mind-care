@@ -25,10 +25,7 @@ export default function ExerciseFinishedScreen() {
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        {/* 
-          On place un BlurView pour flouter juste la zone du texte 
-          afin de conserver l’image visible derrière. 
-        */}
+       
         <View style={styles.blurWrapper}>
           <BlurView intensity={60} tint="light" style={styles.blurContainer}>
             <Text style={styles.title}>Félicitations !</Text>
@@ -60,20 +57,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   blurWrapper: {
-    // On centre le contenu au milieu de l'écran (verticalement et horizontalement)
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 24,
   },
   blurContainer: {
-    // Dimensions maximales du bloc flouté derrière le texte
     width: "100%",
     borderRadius: 16,
     paddingVertical: 24,
     paddingHorizontal: 16,
     alignItems: "center",
-    // Légère ombre pour distinguer le bloc du fond
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },

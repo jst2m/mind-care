@@ -1,5 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+// src/screens/ChatScreen.tsx
+
+import React, { useEffect, useState, useRef } from "react";
 import {
+  SafeAreaView,
   View,
   Text,
   TextInput,
@@ -7,11 +10,12 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
-import tw from 'twrnc';
-import { apiFetch } from '../utils/api';
+  StyleSheet,
+} from "react-native";
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
+import { apiFetch } from "../utils/api";
+import { colors, typography } from "../styles/theme";
 
 type RootStackParamList = {
   ChatScreen: {
@@ -20,9 +24,8 @@ type RootStackParamList = {
   };
 };
 
-type ChatRouteProp = RouteProp<RootStackParamList, 'ChatScreen'>;
+type ChatRouteProp = RouteProp<RootStackParamList, "ChatScreen">;
 
-/** Structure renvoyée par l’API pour un message */
 type MessageItem = {
   id: number;
   deUuid: string;
@@ -37,9 +40,11 @@ export default function ChatScreen() {
 
   if (!route.params) {
     return (
-      <View style={tw`flex-1 items-center justify-center bg-white`}>
-        <Text>Aucun chat disponible.</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <Text>Aucun chat disponible.</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -47,7 +52,7 @@ export default function ChatScreen() {
   const professionnelName = route.params.professionnelName;
 
   const [messages, setMessages] = useState<MessageItem[]>([]);
-  const [newMsg, setNewMsg] = useState<string>('');
+  const [newMsg, setNewMsg] = useState<string>("");
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -58,17 +63,14 @@ export default function ChatScreen() {
   const loadConversation = async () => {
     if (!professionnelUuid) return;
     try {
-      const data = await apiFetch<MessageItem[]>(
-        `/messages/conversation/${professionnelUuid}`
-      );
+      const data = await apiFetch<MessageItem[]>(`/messages/conversation/${professionnelUuid}`);
       setMessages(data);
 
-      // scroll automatique vers le bas après un court délai
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: false });
       }, 50);
     } catch (err) {
-      console.error('Erreur chargement conversation :', err);
+      console.error("Erreur chargement conversation :", err);
     }
   };
 
@@ -79,81 +81,135 @@ export default function ChatScreen() {
         toUuid: professionnelUuid,
         contenu: newMsg.trim(),
       };
-      const sent = await apiFetch<MessageItem>('/messages', {
-        method: 'POST',
+      const sent = await apiFetch<MessageItem>("/messages", {
+        method: "POST",
         body: JSON.stringify(payload),
       });
       setMessages((prev) => [...prev, sent]);
-      setNewMsg('');
+      setNewMsg("");
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 50);
     } catch (err) {
-      console.error('Erreur envoi message :', err);
+      console.error("Erreur envoi message :", err);
     }
   };
 
   const renderItem = ({ item }: { item: MessageItem }) => {
-    // Reconstruire le texte à partir du Buffer reçu ou simple string
-    let textMsg = '';
-    if (typeof item.contenu === 'string') {
+    let textMsg = "";
+    if (typeof item.contenu === "string") {
       textMsg = item.contenu;
     } else if (
       item.contenu &&
-      typeof item.contenu === 'object' &&
+      typeof item.contenu === "object" &&
       Array.isArray(item.contenu.data)
     ) {
       textMsg = String.fromCharCode(...item.contenu.data);
     }
 
-    // Alignement à droite si l’expéditeur ≠ pro (i.e. c’est le patient qui a envoyé)
     const isMine = item.deUuid !== professionnelUuid;
 
     return (
       <View
-        style={tw`mx-4 my-2 max-w-3/4 ${
-          isMine ? 'self-end bg-green-100' : 'self-start bg-gray-200'
-        } rounded-xl p-3`}
+        style={[
+          styles.bubble,
+          isMine ? styles.bubbleMine : styles.bubbleTheirs,
+        ]}
       >
-        <Text
-          style={tw`${
-            isMine ? 'text-right text-green-800' : 'text-left text-gray-800'
-          }`}
-        >
-          {textMsg}
-        </Text>
-        <Text style={tw`text-xs text-gray-500 mt-1`}>
-          {new Date(item.dateEnvoi).toLocaleTimeString('fr-FR')}
+        <Text style={isMine ? styles.textMine : styles.textTheirs}>{textMsg}</Text>
+        <Text style={styles.timeStamp}>
+          {new Date(item.dateEnvoi).toLocaleTimeString("fr-FR")}
         </Text>
       </View>
     );
   };
 
   return (
-    <KeyboardAvoidingView
-      style={tw`flex-1 bg-white`}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
-    >
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={renderItem}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
-      />
-
-      <View style={tw`flex-row items-center border-t border-gray-300 p-2`}>
-        <TextInput
-          value={newMsg}
-          onChangeText={setNewMsg}
-          placeholder="Écrire un message..."
-          style={tw`flex-1 border border-gray-300 rounded-full px-4 py-2 mr-2`}
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      >
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderItem}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
         />
-        <TouchableOpacity onPress={sendMessage}>
-          <Feather name="send" size={24} color="#10B981" />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            value={newMsg}
+            onChangeText={setNewMsg}
+            placeholder="Écrire un message..."
+            style={styles.textInput}
+          />
+          <TouchableOpacity onPress={sendMessage}>
+            <Feather name="send" size={24} color={colors.green700} />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bubble: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    maxWidth: "75%",
+    borderRadius: 16,
+    padding: 12,
+  },
+  bubbleMine: {
+    alignSelf: "flex-end",
+    backgroundColor: colors.green100,
+  },
+  bubbleTheirs: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.gray200,
+  },
+  textMine: {
+    textAlign: "right",
+    color: colors.green700,
+  },
+  textTheirs: {
+    textAlign: "left",
+    color: colors.gray800,
+  },
+  timeStamp: {
+    fontSize: 10,
+    color: colors.gray500,
+    marginTop: 4,
+    textAlign: "right",
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: colors.gray300,
+    padding: 8,
+  },
+  textInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.gray300,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    fontFamily: typography.bodyRegular.fontFamily,
+    fontSize: 14,
+  },
+});

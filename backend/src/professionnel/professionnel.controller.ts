@@ -14,7 +14,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ProfessionnelService } from './professionnel.service';
 import { Professionnel } from './professionnel.entity';
 
-// …imports…
 @Controller('professionnels')
 @UseGuards(JwtAuthGuard)
 export class ProfessionnelController {
@@ -38,10 +37,8 @@ export class ProfessionnelController {
     return this.svc.upsert({ uuid: req.user.uuid, ...body });
   }
 
-  /** ← Cette méthode doit exister pour tout UUID arbitraire */
   @Get(':uuid')
   getByUuid(@Param('uuid') uuid: string): Promise<Professionnel> {
     return this.svc.findOne(uuid);
   }
 }
-

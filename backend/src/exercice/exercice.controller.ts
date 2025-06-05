@@ -18,18 +18,16 @@ interface ExoDto {
 export class ExerciceController {
   constructor(private svc: ExerciceService) {}
 
-  /** GET /exercice -> liste des exercices formatés */
   @Get()
   async findAll(): Promise<ExoDto[]> {
     const list = await this.svc.findAll();
     return list.map(e => ({
       id: e.id,
       title: e.titre,
-      content_markdown: e.description,    // on renvoie bien une string
+      content_markdown: e.description,    
     }));
   }
 
-  /** GET /exercice/:id -> un exercice unique formaté */
   @Get(':id')
   async findOne(@Param('id') id: number): Promise<ExoDto> {
     const e = await this.svc.findOne(id);

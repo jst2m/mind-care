@@ -9,6 +9,6 @@ import { PatientController } from './patient.controller';
   imports: [TypeOrmModule.forFeature([Patient])],
   providers: [PatientService],
   controllers: [PatientController],
-  exports: [PatientService],  // <-- on exporte PatientService pour qu’il soit injecté ailleurs
+  exports: [PatientService], 
 })
 export class PatientModule {}

@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+// src/screens/SearchProsScreen.tsx
+
+import React, { useState, useEffect } from "react";
 import {
+  SafeAreaView,
   View,
   TextInput,
   FlatList,
@@ -7,11 +10,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
-import { apiFetch } from '../utils/api';
-import { colors, typography, commonStyles, fonts } from '../styles/theme';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
+import { apiFetch } from "../utils/api";
+import { colors, typography, commonStyles, fonts } from "../styles/theme";
 
 type ProsItem = {
   uuid: string;
@@ -26,29 +29,10 @@ type ProsItem = {
 };
 
 export default function SearchProsScreen() {
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [pros, setPros] = useState<ProsItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const navigation = useNavigation<any>();
-
-  const fetchPros = async (term: string) => {
-    try {
-      setLoading(true);
-      // Appel GET /professionnels?search=…
-      const url =
-        term && term.trim().length > 0
-          ? `/professionnels?search=${encodeURIComponent(term.trim())}`
-          : '/professionnels';
-
-      const data = await apiFetch<ProsItem[]>(url);
-      setPros(data);
-    } catch (err) {
-      console.error('Erreur fetch pros :', err);
-      setPros([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -57,11 +41,29 @@ export default function SearchProsScreen() {
     return () => clearTimeout(handle);
   }, [searchTerm]);
 
+  const fetchPros = async (term: string) => {
+    try {
+      setLoading(true);
+      const url =
+        term && term.trim().length > 0
+          ? `/professionnels?search=${encodeURIComponent(term.trim())}`
+          : "/professionnels";
+
+      const data = await apiFetch<ProsItem[]>(url);
+      setPros(data);
+    } catch (err) {
+      console.error("Erreur fetch pros :", err);
+      setPros([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderItem = ({ item }: { item: ProsItem }) => (
     <View style={styles.itemContainer}>
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate('ChatScreen', {
+          navigation.navigate("ChatScreen", {
             professionnelUuid: item.uuid,
             professionnelName: `${item.utilisateur.prenom} ${item.utilisateur.nom}`,
           });
@@ -74,7 +76,7 @@ export default function SearchProsScreen() {
       <TouchableOpacity
         style={styles.infoContainer}
         onPress={() => {
-          navigation.navigate('ProProfile', {
+          navigation.navigate("ProProfile", {
             professionnelUuid: item.uuid,
             professionnelName: `${item.utilisateur.prenom} ${item.utilisateur.nom}`,
           });
@@ -89,7 +91,7 @@ export default function SearchProsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.searchContainer}>
         <TextInput
           placeholder="Rechercher un professionnel"
@@ -109,17 +111,17 @@ export default function SearchProsScreen() {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={() => (
             <Text style={styles.emptyText}>
-              {searchTerm ? 'Aucun professionnel trouvé.' : 'Tapez pour rechercher un psy…'}
+              {searchTerm ? "Aucun professionnel trouvé." : "Tapez pour rechercher un psy…"}
             </Text>
           )}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: colors.creamLight,
   },
@@ -135,13 +137,13 @@ const styles = StyleSheet.create({
   emptyText: {
     ...typography.bodyRegular,
     color: colors.gray500,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 32,
   },
   itemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontFamily: fonts.baseSans,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.brownDark,
   },
   itemSubtitle: {

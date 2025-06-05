@@ -34,7 +34,6 @@ export default function LoginScreen() {
     }
 
     try {
-      // Utilisez `API_HOST` pour pointer vers votre back-end
       const response = await fetch(`${API_HOST}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -50,7 +49,6 @@ export default function LoginScreen() {
         return;
       }
 
-      // Supposons que le back-end renvoie { accessToken: "…" }
       const { accessToken } = data as { accessToken: string };
       if (!accessToken) {
         Alert.alert("Erreur", "Aucun token renvoyé par le serveur.");
@@ -58,7 +56,6 @@ export default function LoginScreen() {
       }
       await login(accessToken);
 
-      // On navigue vers Home (à condition que Home soit bien déclaré dans le navigator parent)
       navigation.replace("Home");
     } catch (error) {
       console.error("Erreur au login :", error);
