@@ -3,19 +3,28 @@ import './Calendar.css';
 
 const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
+const getStartOfWeek = (date: Date) => {
+  const copiedDate = new Date(date);
+  const day = copiedDate.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  copiedDate.setDate(copiedDate.getDate() + diff);
+  return copiedDate;
+};
+
 const generateDays = (start: Date) => {
-  const monthYear = start.toLocaleString('fr-FR', {
+  const baseDate = getStartOfWeek(start);
+  const monthYear = baseDate.toLocaleString('fr-FR', {
     month: 'long',
     year: 'numeric',
   });
 
   const daysList = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(start);
-    date.setDate(date.getDate() + i);
+    const date = new Date(baseDate);
+    date.setDate(baseDate.getDate() + i);
     return {
-      label: days[date.getDay() === 0 ? 6 : date.getDay() - 1],
+      label: days[i],
       date: `${date.getDate()}`,
-      key: `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`,
+      key: `${days[i]} ${date.getDate()}`,
     };
   });
 
@@ -30,44 +39,59 @@ const generateTimes = () => {
   return times;
 };
 
-// Réservations spécifiques à la semaine du 05/06/2025
-const reservedSlots: Record<string, { name: string; reason: string }> = {
-  'Mer 5 09:00': { name: 'Alice Dupont', reason: 'Suivi anxiété' },
-  'Mer 5 15:00': { name: 'Luc Bernard', reason: 'Thérapie cognitive' },
-  'Jeu 6 10:00': { name: 'Claire Martin', reason: 'Consultation sommeil' },
-  'Ven 7 14:00': { name: 'Gabriel Noel', reason: 'Bilan initial' },
-  'Sam 8 11:00': { name: 'Léa Petit', reason: 'Suivi hebdomadaire' },
-  'Dim 9 16:00': { name: 'Maxime Leroy', reason: 'Crise panique' },
+// Réservations pour la semaine du 2 au 8 juin 2025
+const initialReservations: Record<string, { name: string; reason: string }> = {
+  'Lun 2 09:00': { name: 'Alice Dupont', reason: 'Suivi anxiété' },
+  'Mar 3 15:00': { name: 'Luc Bernard', reason: 'Thérapie cognitive' },
+  'Mer 4 10:00': { name: 'Claire Martin', reason: 'Consultation sommeil' },
+  'Jeu 5 14:00': { name: 'Gabriel Noel', reason: 'Bilan initial' },
+  'Ven 6 11:00': { name: 'Léa Petit', reason: 'Suivi hebdomadaire' },
+  'Sam 7 10:00': { name: 'Maxime Leroy', reason: 'Crise panique' },
 };
 
 const Calendar: React.FC = () => {
-  const [startDate, setStartDate] = useState(new Date('2025-06-05'));
+  const [startDate, setStartDate] = useState(new Date('2025-06-02'));
   const { monthYear, daysList } = generateDays(startDate);
-  const times = generateTimes();
-  const [selectedInfo, setSelectedInfo] = useState<null | string>(null);
+  const [reservations, setReservations] = useState(initialReservations);
+  const [selectedSlotKey, setSelectedSlotKey] = useState<string | null>(null);
 
   const handlePrev = () => {
     const newStart = new Date(startDate);
     newStart.setDate(newStart.getDate() - 7);
     setStartDate(newStart);
-    setSelectedInfo(null);
+    setSelectedSlotKey(null);
   };
 
   const handleNext = () => {
     const newStart = new Date(startDate);
     newStart.setDate(newStart.getDate() + 7);
     setStartDate(newStart);
-    setSelectedInfo(null);
+    setSelectedSlotKey(null);
   };
 
   const handleSlotClick = (label: string, day: string, time: string) => {
     const key = `${label} ${day} ${time}`;
-    if (reservedSlots[key]) {
-      setSelectedInfo(`${reservedSlots[key].name} – ${reservedSlots[key].reason}`);
+    if (reservations[key]) {
+      setSelectedSlotKey(key);
     } else {
-      setSelectedInfo(null);
+      setSelectedSlotKey(null);
     }
   };
+
+  const handleCancel = () => {
+    if (!selectedSlotKey) return;
+    const updated = { ...reservations };
+    delete updated[selectedSlotKey];
+    setReservations(updated);
+    setSelectedSlotKey(null);
+  };
+
+  const handleConfirm = () => {
+    alert('Rendez-vous confirmé !');
+    setSelectedSlotKey(null);
+  };
+
+  const timeSlots = generateTimes();
 
   return (
     <div className="calendar-wrapper">
@@ -85,18 +109,25 @@ const Calendar: React.FC = () => {
         </div>
 
         <div className="calendar-body">
-          {times.map((time, idx) => (
-            <div key={idx} className="calendar-row">
+          {timeSlots.map((time) => (
+            <div key={time} className="calendar-row">
               {daysList.map((day, colIdx) => {
+                const isSunday = day.label === 'Dim';
+                const isSaturdayAfternoon = day.label === 'Sam' && parseInt(time) > 12;
+
+                if (isSunday || isSaturdayAfternoon) {
+                  return <div key={colIdx} className="slot empty"></div>;
+                }
+
                 const slotKey = `${day.label} ${day.date} ${time}`;
-                const isReserved = reservedSlots[slotKey];
+                const isReserved = reservations[slotKey];
 
                 return (
                   <button
                     key={colIdx}
                     className={`slot ${isReserved ? 'reserved' : 'available'}`}
                     onClick={() => handleSlotClick(day.label, day.date, time)}
-                    disabled={!!isReserved}
+                    disabled={!isReserved}
                   >
                     {time}
                   </button>
@@ -106,11 +137,15 @@ const Calendar: React.FC = () => {
           ))}
         </div>
 
-        {selectedInfo && (
+        {selectedSlotKey && reservations[selectedSlotKey] && (
           <div className="slot-info">
-            <span>{selectedInfo}</span>
-            <button className="confirm-btn">✔</button>
-            <button className="cancel-btn">✖</button>
+            <span>
+              <strong>{reservations[selectedSlotKey].name}</strong> – {reservations[selectedSlotKey].reason}
+            </span>
+            <div className="slot-actions">
+              <button className="confirm-btn" onClick={handleConfirm}>✔</button>
+              <button className="cancel-btn" onClick={handleCancel}>✖</button>
+            </div>
           </div>
         )}
       </div>
