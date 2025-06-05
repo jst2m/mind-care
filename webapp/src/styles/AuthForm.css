@@ -1,0 +1,144 @@
+.page {
+  background-color: #f5f1eb;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 2rem;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.header-img {
+  width: 100%;
+  max-height: 250px;
+  object-fit: cover;
+  margin-bottom: 1rem;
+}
+
+.auth-card {
+  background-color: #ffffff;
+  border: 1px solid #d9d4cd;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
+}
+
+.auth-card h2 {
+  margin-bottom: 1.5rem;
+  color: #2d2d2d;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #3b3b3b;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #ccc5b9;
+  font-size: 1rem;
+  background-color: #fffaf3;
+  color: #2d2d2d;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #9eaa75;
+  background-color: #fdfcf9;
+}
+
+.radio-group {
+  display: flex;
+  gap: 2rem;
+  margin-top: 0.5rem;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 500;
+  color: #3b3b3b;
+}
+
+.toggle-role {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.toggle-role button {
+  background-color: #e8e5dd;
+  border: 1px solid #ccc5b9;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 6px;
+  color: #333;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-role button.active {
+  background-color: #9eaa75;
+  color: white;
+  border-color: #9eaa75;
+}
+
+.btn {
+  width: 100%;
+  background-color: #9eaa75;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #859655;
+}
+
+.link {
+  background: none;
+  border: none;
+  color: #7b6f63;
+  margin-top: 1rem;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.95rem;
+}
+
+.link:hover {
+  color: #5f5b53;
+}
+
+@media (max-width: 600px) {
+  .auth-card {
+    margin: 0 1rem;
+    padding: 1.5rem;
+  }
+
+  .auth-card h2 {
+    font-size: 1.5rem;
+  }  
+}
