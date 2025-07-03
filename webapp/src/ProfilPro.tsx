@@ -1,49 +1,55 @@
 import { useState } from 'react';
 import './ProfilPro.css';
 
-const initialData = {
-  nom: 'Dupont',
-  prenom: 'Claire',
-  email: 'claire.dupont@example.com',
-  telephone: '0612345678',
-  specialite: 'Psychologue',
-  statut: 'Libéral',
-  description: 'Spécialisée en thérapie cognitive et comportementale.',
-};
-
 const ProfilPro = () => {
-  const [data, setData] = useState(initialData);
-  const [isEditing, setIsEditing] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+
+  const [originalData, setOriginalData] = useState({
+    nom: 'Dupont',
+    prenom: 'Jean',
+    email: 'jean.dupont@example.com',
+    telephone: '0601020304',
+    specialite: 'Psychologue',
+    statut: 'liberal',
+    description: 'Psychologue spécialisé dans le bien-être mental des jeunes adultes.',
+  });
+
+  const [formData, setFormData] = useState({ ...originalData });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleEdit = () => setIsEditing(true);
   const handleSave = () => {
-    setIsEditing(false);
+    setOriginalData(formData); // met à jour les données sauvegardées
+    setEditMode(false);
     alert('Modifications enregistrées.');
+  };
+
+  const handleCancel = () => {
+    setFormData(originalData); // restaure les anciennes données
+    setEditMode(false);
   };
 
   return (
     <div className="profil-container">
-      <h2>Mon Profil</h2>
-      <div className="profil-form">
+      <h2>Profil du Praticien</h2>
+      <form className="profil-form">
         <label>Nom :</label>
-        <input name="nom" value={data.nom} onChange={handleChange} disabled={!isEditing} />
+        <input type="text" name="nom" value={formData.nom} onChange={handleChange} disabled={!editMode} />
 
         <label>Prénom :</label>
-        <input name="prenom" value={data.prenom} onChange={handleChange} disabled={!isEditing} />
+        <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} disabled={!editMode} />
 
         <label>Email :</label>
-        <input type="email" name="email" value={data.email} onChange={handleChange} disabled={!isEditing} />
+        <input type="email" name="email" value={formData.email} onChange={handleChange} disabled={!editMode} />
 
         <label>Téléphone :</label>
-        <input type="tel" name="telephone" value={data.telephone} onChange={handleChange} disabled={!isEditing} />
+        <input type="tel" name="telephone" value={formData.telephone} onChange={handleChange} disabled={!editMode} />
 
         <label>Spécialité :</label>
-        <select name="specialite" value={data.specialite} onChange={handleChange} disabled={!isEditing}>
+        <select name="specialite" value={formData.specialite} onChange={handleChange} disabled={!editMode}>
           <option value="Psychologue">Psychologue</option>
           <option value="Psychiatre">Psychiatre</option>
           <option value="Psychiatre enfant ado">Psychiatre de l'enfant et de l'adolescent</option>
@@ -51,26 +57,29 @@ const ProfilPro = () => {
         </select>
 
         <label>Statut :</label>
-        <select name="statut" value={data.statut} onChange={handleChange} disabled={!isEditing}>
-          <option value="Libéral">Libéral</option>
-          <option value="Salarié">Salarié</option>
+        <select name="statut" value={formData.statut} onChange={handleChange} disabled={!editMode}>
+          <option value="liberal">Libéral</option>
+          <option value="salarié">Salarié</option>
         </select>
 
         <label>Description :</label>
-        <textarea
-          name="description"
-          value={data.description}
-          onChange={handleChange}
-          rows={4}
-          disabled={!isEditing}
-        />
+        <textarea name="description" rows={4} value={formData.description} onChange={handleChange} disabled={!editMode} />
 
-        {!isEditing ? (
-          <button className="btn-edit" onClick={handleEdit}>Modifier</button>
+        {!editMode ? (
+          <button type="button" className="btn-edit" onClick={() => setEditMode(true)}>
+            Modifier le profil
+          </button>
         ) : (
-          <button className="btn-save" onClick={handleSave}>Enregistrer</button>
+          <div className="button-group">
+            <button type="button" className="btn-save" onClick={handleSave}>
+              Enregistrer les modifications
+            </button>
+            <button type="button" className="btn-cancel" onClick={handleCancel}>
+              Annuler
+            </button>
+          </div>
         )}
-      </div>
+      </form>
     </div>
   );
 };

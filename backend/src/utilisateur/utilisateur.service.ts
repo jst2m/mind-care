@@ -4,6 +4,8 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Utilisateur } from "./utilisateur.entity";
+import { CreateUtilisateurDto } from './dto/create-utilisateur.dto';
+
 
 @Injectable()
 export class UtilisateurService {

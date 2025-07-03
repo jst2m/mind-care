@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import './navbar.css';
 import { useEffect, useState } from 'react';
+import logo from '.src/assets/Logo.png'; // <-- chemin du logo
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -20,9 +21,8 @@ const Navbar = () => {
   return (
     <header className="navbar">
       <div className="navbar-container">
-        {/* ✅ Logo cliquable vers la page d'accueil */}
         <Link to="/" className="navbar-logo">
-          mind<span className="logo-accent">Care</span>
+          <img src={logo} alt="MindCare Logo" className="logo-image" />
         </Link>
 
         <nav className="navbar-links" aria-label="Navigation principale">

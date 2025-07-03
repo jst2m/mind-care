@@ -9,8 +9,8 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RendezVous]),
-    AuthModule, 
+    TypeOrmModule.forFeature([RendezVous], 'webConnection'), // ← ici on précise la connexion
+    AuthModule,
   ],
   providers: [RendezVousService],
   controllers: [RendezVousController],

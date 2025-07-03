@@ -5,7 +5,7 @@ import { UtilisateurController } from './utilisateur.controller';
 import { Utilisateur }       from './utilisateur.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Utilisateur])],
+  imports: [TypeOrmModule.forFeature([Utilisateur], 'webConnection')],
   providers: [UtilisateurService],
   controllers: [UtilisateurController],
   exports: [UtilisateurService],

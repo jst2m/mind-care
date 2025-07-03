@@ -90,7 +90,6 @@ const AuthForm = () => {
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Connexion */}
           {isLogin && (
             <>
               <div className="form-group">
@@ -104,7 +103,6 @@ const AuthForm = () => {
             </>
           )}
 
-          {/* Inscription utilisateur */}
           {!isLogin && !isPro && (
             <>
               <div className="form-group">
@@ -126,7 +124,6 @@ const AuthForm = () => {
             </>
           )}
 
-          {/* Inscription professionnel */}
           {!isLogin && isPro && (
             <>
               <div className="form-group">
@@ -177,12 +174,12 @@ const AuthForm = () => {
                 </div>
               </div>
               <div className="form-group">
-                <label>Votre message (optionnel) :</label>
+                <label>Description :</label>
                 <textarea
                   name="description"
                   value={proData.description}
                   onChange={handleChange}
-                  className="custom-message"
+                  className="description-textarea"
                   placeholder="Présentez brièvement votre parcours, votre approche..."
                 />
               </div>

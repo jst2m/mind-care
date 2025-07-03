@@ -13,11 +13,11 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/auth" element={<AuthForm />} />       {/* ✅ Authentification */}
-          <Route path="/login" element={<AuthForm />} />       {/* (optionnel si déjà utilisé ailleurs) */}
+          <Route path="/auth" element={<AuthForm />} />  
+          <Route path="/login" element={<AuthForm />} />  
           <Route path="/profil" element={<ProfilPro />} />
           <Route path="/messages" element={<Messages />} />
-          <Route path="/rendez-vous" element={<Calendar />} /> {/* ✅ Corrigé ici */}
+          <Route path="/rendez-vous" element={<Calendar />} /> 
         </Routes>
       </div>
     </Router>

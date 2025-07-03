@@ -134,3 +134,83 @@
   color: #777;
   font-size: 1.2rem;
 }
+
+/* ➕ Bouton flottant pour nouvelle conversation */
+.new-convo-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: #8a7664;
+  color: white;
+  font-size: 28px;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s ease;
+  z-index: 100;
+}
+
+.new-convo-btn:hover {
+  background-color: #735f50;
+}
+
+/* Boîte de recherche des patients */
+.search-box {
+  position: fixed;
+  bottom: 90px;
+  right: 24px;
+  background: #fffaf3;
+  border: 1px solid #d9d4cd;
+  border-radius: 10px;
+  width: 260px;
+  padding: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  z-index: 99;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc5b9;
+  background-color: #fdfcf9;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #9eaa75;
+}
+
+/* Résultats de recherche */
+.search-box ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.search-box li {
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #333;
+  transition: background-color 0.2s ease;
+}
+
+.search-box li:hover {
+  background-color: #e3dfd7;
+}
+
+.no-result {
+  color: #888;
+  font-size: 0.9rem;
+  padding: 6px;
+}
+

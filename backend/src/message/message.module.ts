@@ -7,10 +7,11 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Message]),
-    AuthModule, 
+    // ⚠️ Ajout du nom de connexion ici :
+    TypeOrmModule.forFeature([Message], 'webConnection'),
+    AuthModule,
   ],
   providers: [MessageService],
-  controllers: [MessageController], 
+  controllers: [MessageController],
 })
 export class MessageModule {}

@@ -9,7 +9,7 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Professionnel]),
+    TypeOrmModule.forFeature([Professionnel], 'webConnection'),
     AuthModule, 
   ],
   providers: [ProfessionnelService],
